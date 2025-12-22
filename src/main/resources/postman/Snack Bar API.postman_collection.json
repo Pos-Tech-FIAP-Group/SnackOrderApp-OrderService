@@ -1,0 +1,461 @@
+{
+	"info": {
+		"_postman_id": "012bca3e-3f4f-4c3d-9a6a-3ff05742f911",
+		"name": "Snack Bar API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "544293"
+	},
+	"item": [
+		{
+			"name": "Product",
+			"item": [
+				{
+					"name": "Create Product",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\": \"X-Salada Especial\",\r\n    \"category\": \"LANCHE\",\r\n    \"price\": 28.75,\r\n    \"description\": \"Pão artesanal, hambúrguer de picanha, queijo prato, alface, tomate, cebola roxa e molho especial da casa.\"\r\n}\r\n\r\n// {\r\n//    \"name\": \"Batata Frita Média\",\r\n//    \"category\": \"ACOMPANHAMENTO\",\r\n//    \"price\": 12.00,\r\n//    \"description\": \"Porção média de batatas fritas crocantes.\"\r\n// }\r\n\r\n// {\r\n//    \"name\": \"Coca-Cola\",\r\n//    \"category\": \"BEBIDA\",\r\n//    \"price\": 8.50,\r\n//    \"description\": \"Lata 350ml.\"\r\n// }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/api/products",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"api",
+								"products"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Products",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{host}}/api/products?active=true",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"api",
+								"products"
+							],
+							"query": [
+								{
+									"key": "active",
+									"value": "true"
+								},
+								{
+									"key": "category",
+									"value": "ACOMPANHAMENTO",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Product By Id",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{host}}/api/products/{{id}}",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"api",
+								"products",
+								"{{id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Product",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"active\": true\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/api/products/{{id}}",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"api",
+								"products",
+								"{{id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Product",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{host}}/api/products/{{id}}",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"api",
+								"products",
+								"{{id}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Add-on",
+			"item": [
+				{
+					"name": "Create Add-on",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\": \"Queijo Cheddar\",\r\n    \"category\": \"LANCHE\",\r\n    \"price\": 3.50\r\n}\r\n\r\n// {\r\n//     \"name\": \"Bacon em Tiras Crocante\",\r\n//     \"category\": \"LANCHE\",\r\n//     \"price\": 5.00\r\n// }\r\n\r\n// {\r\n//     \"name\": \"Ovomaltine\",\r\n//     \"category\": \"SOBREMESA\",\r\n//     \"price\": 3.00\r\n// }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/api/products/add-ons",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"api",
+								"products",
+								"add-ons"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Add-ons",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"name\": \"Queijo Cheddar\",\r\n  \"price\": 3.50\r\n}\r\n\r\n// {\r\n//   \"name\": \"Bacon em Tiras Crocante\",\r\n//   \"price\": 5.00\r\n// }"
+						},
+						"url": {
+							"raw": "{{host}}/api/products/add-ons?active=true",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"api",
+								"products",
+								"add-ons"
+							],
+							"query": [
+								{
+									"key": "active",
+									"value": "true"
+								},
+								{
+									"key": "category",
+									"value": "LANCHE",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Add-ons By Id",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"name\": \"Queijo Cheddar\",\r\n  \"price\": 3.50\r\n}\r\n\r\n// {\r\n//   \"name\": \"Bacon em Tiras Crocante\",\r\n//   \"price\": 5.00\r\n// }"
+						},
+						"url": {
+							"raw": "{{host}}/api/products/add-ons/{{id}}",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"api",
+								"products",
+								"add-ons",
+								"{{id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Add-on",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"active\": false\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/api/products/add-ons/{{id}}",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"api",
+								"products",
+								"add-ons",
+								"{{id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Add-on",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{host}}/api/products/add-ons/{{id}}",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"api",
+								"products",
+								"add-ons",
+								"{{id}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Customer",
+			"item": [
+				{
+					"name": "Create User",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\": \"Vitor Braz Silva\",\r\n    \"email\": \"teste@teste.com\",\r\n    \"cpf\": \"13818177775\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/api/user",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"api",
+								"user"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Order",
+			"item": [
+				{
+					"name": "Start Order (Anonymous)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}"
+						},
+						"url": {
+							"raw": "{{host}}/api/orders/init",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"api",
+								"orders",
+								"init"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Start Order (With CPF)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"cpf\": \"12345678902\"\n}"
+						},
+						"url": {
+							"raw": "{{host}}/api/orders/init",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"api",
+								"orders",
+								"init"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Add Items Order with Addon",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"items\": [\r\n    {\r\n      \"productId\": 1,      \r\n      \"quantity\": 1,\r\n      \"addOns\": [\r\n            { \r\n                \"addOnId\": 1, \r\n                \"quantity\": 2 \r\n            }        \r\n        ]\r\n    }\r\n    ]\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/api/orders/{{orderId}}/item",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"api",
+								"orders",
+								"{{orderId}}",
+								"item"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Order Status",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"status\": \"RECEBIDO\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/api/orders/{{orderId}}/status",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"api",
+								"orders",
+								"{{orderId}}",
+								"status"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "All Orders With All Details",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{host}}/api/orders?status=INICIADO, RECEBIDO, EM_PREPARACAO, PRONTO, FINALIZADO",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"api",
+								"orders"
+							],
+							"query": [
+								{
+									"key": "status",
+									"value": "INICIADO, RECEBIDO, EM_PREPARACAO, PRONTO, FINALIZADO"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
