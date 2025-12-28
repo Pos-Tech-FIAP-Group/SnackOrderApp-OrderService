@@ -9,7 +9,7 @@ import com.fiap.snackapp.core.domain.enums.OrderStatus;
 import java.util.List;
 
 public interface OrderUseCase {
-    OrderResponse startOrder(OrderInitRequest request);
+    OrderResponse initOrder(String cpf);
     OrderResponse addItems(Long orderId, OrderItemsRequest request);
     void updateOrderStatus(Long orderId, OrderStatusUpdateRequest request);
     List<OrderResponse> listAllOrdersByFilters(List<OrderStatus> orderStatus);

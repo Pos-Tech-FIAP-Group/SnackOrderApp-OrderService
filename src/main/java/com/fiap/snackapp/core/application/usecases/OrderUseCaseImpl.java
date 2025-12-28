@@ -1,7 +1,6 @@
 package com.fiap.snackapp.core.application.usecases;
 
 import com.fiap.snackapp.core.application.dto.request.ItemRequest;
-import com.fiap.snackapp.core.application.dto.request.OrderInitRequest;
 import com.fiap.snackapp.core.application.dto.request.OrderItemsRequest;
 import com.fiap.snackapp.core.application.dto.request.OrderStatusUpdateRequest;
 import com.fiap.snackapp.core.application.dto.response.OrderResponse;
@@ -14,6 +13,8 @@ import com.fiap.snackapp.core.application.repository.OrderRepositoryPort;
 import com.fiap.snackapp.core.application.repository.ProductRepositoryPort;
 import com.fiap.snackapp.core.domain.enums.OrderStatus;
 import com.fiap.snackapp.core.domain.model.*;
+import com.fiap.snackapp.core.domain.vo.CPF;
+import com.fiap.snackapp.core.domain.vo.Email;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -31,16 +32,12 @@ public class OrderUseCaseImpl implements OrderUseCase {
     private final AddOnRepositoryPort addOnRepository;
 
     @Override
-    public OrderResponse startOrder(OrderInitRequest request) {
-        CustomerDefinition inputCustomer = orderMapper.toCustomerDomain(request);
-
+    public OrderResponse initOrder(String cpf) {
         CustomerDefinition customer = null;
+        CPF inputCpf = new CPF(cpf);
 
-        if (inputCustomer != null) {
-
-            customer = customerRepository.findByCpf(inputCustomer.cpf())
-                    .orElseGet(() -> customerRepository.save(inputCustomer));
-        }
+        customer = customerRepository.findByCpf(inputCpf)
+                .orElseGet(() -> customerRepository.save(new CustomerDefinition(null, "Cliente", new Email("default@email.com"), inputCpf)));
 
         OrderDefinition order = orderMapper.toOrderDomain(customer);
         OrderDefinition savedOrder = orderRepository.save(order);
