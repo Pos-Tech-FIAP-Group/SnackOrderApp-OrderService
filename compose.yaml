@@ -35,46 +35,6 @@ services:
       db:
         condition: service_healthy
 
-#  rabbitmq:
-#    #    image: rabbitmq:4-management
-#    image: rabbitmq:3.12-management
-#    container_name: rabbitmq
-#    restart: always
-#    ports:
-#      - 5672:5672
-#      - 15672:15672
-#    volumes:
-#      - ./dados:/var/lib/rabbitmq/
-#    environment:
-#      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
-#      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
-
-#  nodered:
-#    image: nodered/node-red
-#    container_name: nodered
-#    ports:
-#      - "1880:1880"
-#    environment:
-#      - TZ=America/Manaus
-#    links:
-#      - rabbitmq
-#    depends_on:
-#      - rabbitmq
-#    volumes:
-#      - node_red_data:/data
-#
-#  pgadmin:
-#    image: dpage/pgadmin4
-#    container_name: pgadmin
-#    restart: always
-#    environment:
-#      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
-#      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
-#    ports:
-#      - "5050:80"
-#    depends_on:
-#      - db
-
 volumes:
   postgres-data:
   node_red_data:
