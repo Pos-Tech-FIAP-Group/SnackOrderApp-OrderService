@@ -18,6 +18,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -35,12 +36,18 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class OrderUseCaseImplTest {
 
-    @Mock private OrderRepositoryPort orderRepository;
-    @Mock private CustomerRepositoryPort customerRepository;
-    @Mock private ProductRepositoryPort productRepository;
-    @Mock private OrderMapper orderMapper;
-    @Mock private OrderItemMapper orderItemMapper;
-    @Mock private AddOnRepositoryPort addOnRepository;
+    @Mock
+    private OrderRepositoryPort orderRepository;
+    @Mock
+    private CustomerRepositoryPort customerRepository;
+    @Mock
+    private ProductRepositoryPort productRepository;
+    @Mock
+    private OrderMapper orderMapper;
+    @Mock
+    private OrderItemMapper orderItemMapper;
+    @Mock
+    private AddOnRepositoryPort addOnRepository;
 
     @InjectMocks
     private OrderUseCaseImpl useCase;
@@ -53,27 +60,40 @@ class OrderUseCaseImplTest {
         @DisplayName("Deve iniciar pedido para cliente novo (salva cliente)")
         void shouldStartOrderForNewCustomer() {
             var cpfString = "12345678900";
-            var request = new OrderInitRequest(cpfString);
-            var cpfVo = new CPF(cpfString);
 
-            var domainCustomer = new CustomerDefinition(null, null, null, cpfVo);
-            var savedCustomer = new CustomerDefinition(1L, null, null, cpfVo);
+            var savedCustomer =
+                    new CustomerDefinition(1L, "Cliente", new Email("default@email.com"), new CPF(cpfString));
 
+            var orderToSave = new OrderDefinition(null, savedCustomer, OrderStatus.INICIADO, new ArrayList<>());
             var savedOrder = new OrderDefinition(10L, savedCustomer, OrderStatus.INICIADO, new ArrayList<>());
-            var expectedResponse = new OrderResponse(10L, OrderStatus.INICIADO.name(), cpfString, List.of(), BigDecimal.ZERO);
 
-            when(orderMapper.toCustomerDomain(request)).thenReturn(domainCustomer);
-            when(customerRepository.findByCpf(cpfVo)).thenReturn(Optional.empty());
-            when(customerRepository.save(domainCustomer)).thenReturn(savedCustomer);
+            var expectedResponse =
+                    new OrderResponse(10L, OrderStatus.INICIADO.name(), cpfString, List.of(), BigDecimal.ZERO);
 
-            when(orderMapper.toOrderDomain(savedCustomer)).thenReturn(new OrderDefinition(null, savedCustomer, OrderStatus.INICIADO, new ArrayList<>()));
+            // findByCpf uses a NEW CPF(cpfString) inside the use case
+            when(customerRepository.findByCpf(any(CPF.class))).thenReturn(Optional.empty());
+
+            // save uses a NEW CustomerDefinition(null,"Cliente",Email("default..."),cpf)
+            when(customerRepository.save(argThat(c ->
+                    c != null
+                            && "Cliente".equals(c.name())
+                            && new Email("default@email.com").equals(c.email())
+                            && new CPF(cpfString).equals(c.cpf())
+            ))).thenReturn(savedCustomer);
+
+            when(orderMapper.toOrderDomain(savedCustomer)).thenReturn(orderToSave);
             when(orderRepository.save(any(OrderDefinition.class))).thenReturn(savedOrder);
             when(orderMapper.toResponse(savedOrder)).thenReturn(expectedResponse);
 
-            var response = useCase.startOrder(request);
+            var response = useCase.initOrder(cpfString);
 
-            assertThat(response).isNotNull();
-            verify(customerRepository).save(domainCustomer);
+            assertThat(response).isEqualTo(expectedResponse);
+
+            verify(customerRepository).save(argThat(c ->
+                    "Cliente".equals(c.name())
+                            && new Email("default@email.com").equals(c.email())
+                            && new CPF(cpfString).equals(c.cpf())
+            ));
             verify(orderRepository).save(any());
         }
 
@@ -81,27 +101,26 @@ class OrderUseCaseImplTest {
         @DisplayName("Deve iniciar pedido para cliente existente (não salva cliente)")
         void shouldStartOrderForExistingCustomer() {
             var cpfString = "12345678900";
-            var request = new OrderInitRequest(cpfString);
             var cpfVo = new CPF(cpfString);
-            var emailVo = new Email("joao@email.com");
+            var existingCustomer = new CustomerDefinition(1L, "João", new Email("joao@email.com"), cpfVo);
 
-            var domainCustomer = new CustomerDefinition(null, null, null, cpfVo);
-            var existingCustomer = new CustomerDefinition(1L, "João", emailVo, cpfVo);
-
+            var orderToSave = new OrderDefinition(null, existingCustomer, OrderStatus.INICIADO, new ArrayList<>());
             var savedOrder = new OrderDefinition(10L, existingCustomer, OrderStatus.INICIADO, new ArrayList<>());
             var expectedResponse = new OrderResponse(10L, OrderStatus.INICIADO.name(), cpfString, List.of(), BigDecimal.ZERO);
 
-            when(orderMapper.toCustomerDomain(request)).thenReturn(domainCustomer);
-            when(customerRepository.findByCpf(cpfVo)).thenReturn(Optional.of(existingCustomer));
-
-            when(orderMapper.toOrderDomain(existingCustomer)).thenReturn(new OrderDefinition(null, existingCustomer, OrderStatus.INICIADO, new ArrayList<>()));
-            when(orderRepository.save(any())).thenReturn(savedOrder);
+            when(customerRepository.findByCpf(any(CPF.class))).thenReturn(Optional.of(existingCustomer));
+            when(orderMapper.toOrderDomain(existingCustomer)).thenReturn(orderToSave);
+            when(orderRepository.save(any(OrderDefinition.class))).thenReturn(savedOrder);
             when(orderMapper.toResponse(savedOrder)).thenReturn(expectedResponse);
 
-            useCase.startOrder(request);
+            var response = useCase.initOrder(cpfString);
+
+            assertThat(response).isEqualTo(expectedResponse);
 
             verify(customerRepository, never()).save(any());
+            verify(orderRepository).save(any());
         }
+
     }
 
     @Nested
