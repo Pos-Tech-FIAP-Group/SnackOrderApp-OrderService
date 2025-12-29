@@ -1,7 +1,6 @@
 package com.fiap.snackapp.adapters.driven.infra.messaging.configuration;
 
-import org.springframework.amqp.core.Queue;
-import org.springframework.amqp.core.QueueBuilder;
+import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -27,10 +26,39 @@ public class SnackAppPedidoAMQPConfiguration {
     }
 
     @Bean
-    public Queue filaPagamentosTeste() {
-        return QueueBuilder
-                .nonDurable("pagamentos.teste")
-                .build();
+    public DirectExchange paymentExchange() {
+        return new DirectExchange("payment.exchange");
+    }
+
+    @Bean
+    public Queue paymentCreatedQueue() {
+        return new Queue("payment.created.queue", true);
+    }
+
+    @Bean
+    public Binding paymentCreatedBinding() {
+        return BindingBuilder
+                .bind(paymentCreatedQueue())
+                .to(paymentExchange())
+                .with("payment.created");
+    }
+
+    @Bean
+    public DirectExchange orderExchange() {
+        return new DirectExchange("order.exchange");
+    }
+
+    @Bean
+    public Queue paymentStatusUpdatedQueue() {
+        return new Queue("order.payment.status.queue", true);
+    }
+
+    @Bean
+    public Binding paymentStatusUpdatedBinding() {
+        return BindingBuilder
+                .bind(paymentStatusUpdatedQueue())
+                .to(orderExchange())
+                .with("order.payment.status.updated");
     }
 
     @Bean
