@@ -2,7 +2,9 @@ package com.fiap.snackapp.core.application.usecases;
 
 import com.fiap.snackapp.core.application.dto.request.ItemRequest;
 import com.fiap.snackapp.core.application.dto.request.OrderItemsRequest;
+import com.fiap.snackapp.core.application.dto.request.OrderPaymentCreateRequest;
 import com.fiap.snackapp.core.application.dto.request.OrderStatusUpdateRequest;
+import com.fiap.snackapp.core.application.dto.response.OrderPaymentCreatedMessageResponse;
 import com.fiap.snackapp.core.application.dto.response.OrderResponse;
 import com.fiap.snackapp.core.application.exception.ResourceNotFoundException;
 import com.fiap.snackapp.core.application.mapper.OrderItemMapper;
@@ -16,6 +18,8 @@ import com.fiap.snackapp.core.domain.model.*;
 import com.fiap.snackapp.core.domain.vo.CPF;
 import com.fiap.snackapp.core.domain.vo.Email;
 import lombok.RequiredArgsConstructor;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -30,6 +34,7 @@ public class OrderUseCaseImpl implements OrderUseCase {
     private final OrderMapper orderMapper;
     private final OrderItemMapper orderItemMapper;
     private final AddOnRepositoryPort addOnRepository;
+    private final RabbitTemplate rabbitTemplate;
 
     @Override
     public OrderResponse initOrder(String cpf) {
@@ -76,6 +81,21 @@ public class OrderUseCaseImpl implements OrderUseCase {
         return orderMapper.toResponse(updated);
     }
 
+    @Override
+    public void requestOrderPaymentCreation(OrderPaymentCreateRequest orderPaymentCreateRequest) {
+        rabbitTemplate.convertAndSend(
+                "payment.exchange",
+                "payment.create",
+                orderPaymentCreateRequest
+        );
+    }
+
+    @Override
+    public void updateOrderWithQrCode(OrderPaymentCreatedMessageResponse orderPaymentCreatedMessageResponse) {
+        updateOrderStatus(orderPaymentCreatedMessageResponse.orderId(),
+                new OrderStatusUpdateRequest(OrderStatus.PAGAMENTO_PENDENTE));
+
+    }
 
     @Override
     public void updateOrderStatus(Long orderId, OrderStatusUpdateRequest request) {
@@ -108,11 +128,12 @@ public class OrderUseCaseImpl implements OrderUseCase {
 
     private boolean isNextValid(OrderStatus current, OrderStatus next) {
         return switch (current) {
-            case INICIADO -> next == OrderStatus.RECEBIDO;
-            case RECEBIDO -> next == OrderStatus.EM_PREPARACAO;
-            case EM_PREPARACAO -> next == OrderStatus.PRONTO;
-            case PRONTO -> next == OrderStatus.FINALIZADO;
+            case INICIADO -> next == OrderStatus.PAGAMENTO_PENDENTE;
+            case PAGAMENTO_PENDENTE -> next == OrderStatus.PAGAMENTO_APROVADO ||  next == OrderStatus.PAGAMENTO_RECUSADO;
+            case PAGAMENTO_APROVADO -> next == OrderStatus.CONCLUIDO;
             default -> false;
         };
     }
+
+
 }

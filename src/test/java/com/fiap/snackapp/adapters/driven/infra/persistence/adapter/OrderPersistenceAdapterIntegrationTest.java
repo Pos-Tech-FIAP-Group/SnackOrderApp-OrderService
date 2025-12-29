@@ -53,12 +53,12 @@ class OrderPersistenceAdapterIntegrationTest {
         o1.setItems(new HashSet<>());
 
         var o2 = new OrderEntity();
-        o2.setStatus(OrderStatus.RECEBIDO);
+        o2.setStatus(OrderStatus.PAGAMENTO_PENDENTE);
         o2.setCustomer(null);
         o2.setItems(new HashSet<>());
 
         var o3 = new OrderEntity();
-        o3.setStatus(OrderStatus.PRONTO);
+        o3.setStatus(OrderStatus.CONCLUIDO);
         o3.setCustomer(null);
         o3.setItems(new HashSet<>());
 
@@ -90,7 +90,7 @@ class OrderPersistenceAdapterIntegrationTest {
 
         assertThat(result).isPresent();
         assertThat(result.get().getId()).isEqualTo(orderRecebidoId);
-        assertThat(result.get().getStatus()).isEqualTo(OrderStatus.RECEBIDO);
+        assertThat(result.get().getStatus()).isEqualTo(OrderStatus.INICIADO);
     }
 
     @Test
@@ -112,11 +112,11 @@ class OrderPersistenceAdapterIntegrationTest {
     @Test
     @DisplayName("findByFilters: deve filtrar por lista de status")
     void findByFilters_ShouldFilterByMultipleStatus() {
-        var result = orderRepositoryPort.findByFilters(List.of(OrderStatus.INICIADO, OrderStatus.PRONTO));
+        var result = orderRepositoryPort.findByFilters(List.of(OrderStatus.INICIADO, OrderStatus.CONCLUIDO));
 
         assertThat(result).hasSize(2);
         assertThat(result).allMatch(o ->
-                o.getStatus() == OrderStatus.INICIADO || o.getStatus() == OrderStatus.PRONTO
+                o.getStatus() == OrderStatus.INICIADO || o.getStatus() == OrderStatus.CONCLUIDO
         );
     }
 

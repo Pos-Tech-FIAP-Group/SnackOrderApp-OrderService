@@ -197,17 +197,17 @@ class OrderUseCaseImplTest {
         @DisplayName("Deve atualizar status com transição válida")
         void shouldUpdateStatusSuccessfully() {
             var items = new ArrayList<OrderItemDefinition>();
-            // CORREÇÃO: Instanciando item dummy corretamente
+
             items.add(new OrderItemDefinition(10L, "Dummy", 1, BigDecimal.TEN, new ArrayList<>()));
 
             var order = new OrderDefinition(1L, null, OrderStatus.INICIADO, items);
-            var request = new OrderStatusUpdateRequest(OrderStatus.RECEBIDO);
+            var request = new OrderStatusUpdateRequest(OrderStatus.PAGAMENTO_PENDENTE);
 
             when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
 
             useCase.updateOrderStatus(1L, request);
 
-            assertThat(order.getStatus()).isEqualTo(OrderStatus.RECEBIDO);
+            assertThat(order.getStatus()).isEqualTo(OrderStatus.PAGAMENTO_PENDENTE);
             verify(orderRepository).save(order);
         }
 
@@ -215,7 +215,7 @@ class OrderUseCaseImplTest {
         @DisplayName("Deve falhar ao tentar mudar status de pedido sem itens")
         void shouldFailIfOrderIsEmpty() {
             var order = new OrderDefinition(1L, null, OrderStatus.INICIADO, new ArrayList<>());
-            var request = new OrderStatusUpdateRequest(OrderStatus.RECEBIDO);
+            var request = new OrderStatusUpdateRequest(OrderStatus.PAGAMENTO_PENDENTE);
 
             when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
 
@@ -231,7 +231,7 @@ class OrderUseCaseImplTest {
             items.add(new OrderItemDefinition(10L, "Dummy", 1, BigDecimal.TEN, new ArrayList<>()));
 
             var order = new OrderDefinition(1L, null, OrderStatus.INICIADO, items);
-            var request = new OrderStatusUpdateRequest(OrderStatus.PRONTO);
+            var request = new OrderStatusUpdateRequest(OrderStatus.CONCLUIDO);
 
             when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
 

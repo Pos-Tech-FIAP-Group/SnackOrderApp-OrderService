@@ -2,6 +2,7 @@ package com.fiap.snackapp.adapters.driver.api.controller;
 
 import com.fiap.snackapp.core.application.dto.request.OrderInitRequest;
 import com.fiap.snackapp.core.application.dto.request.OrderItemsRequest;
+import com.fiap.snackapp.core.application.dto.request.OrderPaymentCreateRequest;
 import com.fiap.snackapp.core.application.dto.request.OrderStatusUpdateRequest;
 import com.fiap.snackapp.core.application.dto.response.OrderResponse;
 import com.fiap.snackapp.core.application.usecases.OrderUseCase;
@@ -47,19 +48,27 @@ public class OrderController {
                 .body(response);
     }
 
+    @PostMapping
+    public ResponseEntity<Void> requestOrderPaymentCreation(OrderPaymentCreateRequest orderPaymentCreateRequest) {
+        orderUseCase.requestOrderPaymentCreation(orderPaymentCreateRequest);
+        return ResponseEntity
+                .status(HttpStatus.ACCEPTED)
+                .build();
+    }
+
     @PatchMapping("/{orderId}/status")
     public ResponseEntity<Void> updateOrderStatus(
             @PathVariable Long orderId,
             @RequestBody @Valid OrderStatusUpdateRequest request) {
         orderUseCase.updateOrderStatus(orderId, request);
         return ResponseEntity
-                .status(HttpStatus.ACCEPTED)
+                .status(HttpStatus.NO_CONTENT)
                 .build();
     }
 
     @GetMapping
     public ResponseEntity<List<OrderResponse>> listAllOrdersByFilters(
-            @RequestParam(name = "status", required = false) List <OrderStatus> orderStatus) {
+            @RequestParam(name = "status", required = false) List<OrderStatus> orderStatus) {
         return ResponseEntity.ok(orderUseCase.listAllOrdersByFilters(orderStatus));
     }
 }
