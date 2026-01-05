@@ -72,7 +72,6 @@ class OrderUseCaseImplTest {
 
             when(customerRepository.findByCpf(any(CPF.class))).thenReturn(Optional.empty());
             when(customerRepository.save(any(CustomerDefinition.class))).thenReturn(savedCustomer);
-
             when(orderMapper.toOrderDomain(savedCustomer)).thenReturn(orderToSave);
             when(orderRepository.save(any(OrderDefinition.class))).thenReturn(savedOrder);
             when(orderMapper.toResponse(savedOrder)).thenReturn(expectedResponse);
@@ -80,7 +79,6 @@ class OrderUseCaseImplTest {
             var response = useCase.initOrder(cpfString);
 
             assertThat(response).isEqualTo(expectedResponse);
-
             verify(customerRepository).save(any(CustomerDefinition.class));
             verify(orderRepository).save(any(OrderDefinition.class));
         }
@@ -101,7 +99,6 @@ class OrderUseCaseImplTest {
             var response = useCase.initOrder(cpfString);
 
             assertThat(response).isEqualTo(expectedResponse);
-
             verify(customerRepository, never()).save(any());
             verify(orderRepository).save(any());
         }
@@ -110,6 +107,7 @@ class OrderUseCaseImplTest {
     @Nested
     @DisplayName("Cenários de Adição de Itens")
     class AddItemsTests {
+
         @Test
         @DisplayName("Deve adicionar itens com adicionais ao pedido")
         void shouldAddItemsWithAddOns() {
@@ -128,10 +126,8 @@ class OrderUseCaseImplTest {
             when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
             when(productRepository.findById(prodId)).thenReturn(Optional.of(product));
             when(addOnRepository.findById(addOnId)).thenReturn(Optional.of(addOn));
-
-            var itemDomain = new OrderItemDefinition(prodId, "Lanche", 1, BigDecimal.valueOf(14), new ArrayList<>());
-            when(orderItemMapper.toDomain(eq(product), eq(itemRequest), anyList())).thenReturn(itemDomain);
-
+            when(orderItemMapper.toDomain(eq(product), eq(itemRequest), anyList()))
+                    .thenReturn(new OrderItemDefinition(prodId, "Lanche", 1, BigDecimal.valueOf(14), new ArrayList<>()));
             when(orderRepository.save(order)).thenReturn(order);
             when(orderMapper.toResponse(order)).thenReturn(mock(OrderResponse.class));
 
@@ -147,17 +143,13 @@ class OrderUseCaseImplTest {
             Long orderId = 1L;
             var order = new OrderDefinition(orderId, null, OrderStatus.INICIADO, new ArrayList<>());
             var product = new ProductDefinition(10L, "Lanche", Category.LANCHE, BigDecimal.TEN, "Desc", true);
-
-            var itemRequest = new ItemRequest(10L, 1, null); // AddOns NULL
+            var itemRequest = new ItemRequest(10L, 1, null);
             var request = new OrderItemsRequest(List.of(itemRequest));
 
             when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
             when(productRepository.findById(10L)).thenReturn(Optional.of(product));
-
-            // Mapper deve ser chamado com lista vazia
             when(orderItemMapper.toDomain(eq(product), eq(itemRequest), eq(List.of())))
                     .thenReturn(new OrderItemDefinition(10L, "Lanche", 1, BigDecimal.TEN, new ArrayList<>()));
-
             when(orderRepository.save(order)).thenReturn(order);
             when(orderMapper.toResponse(order)).thenReturn(mock(OrderResponse.class));
 
@@ -198,7 +190,6 @@ class OrderUseCaseImplTest {
             Long orderId = 1L;
             var order = new OrderDefinition(orderId, null, OrderStatus.INICIADO, new ArrayList<>());
             var product = new ProductDefinition(10L, "Lanche", Category.LANCHE, BigDecimal.TEN, "Desc", true);
-
             var addOnRequest = new AddOnRequest(999L, 1);
             var itemRequest = new ItemRequest(10L, 1, List.of(addOnRequest));
             var request = new OrderItemsRequest(List.of(itemRequest));
@@ -216,6 +207,7 @@ class OrderUseCaseImplTest {
     @Nested
     @DisplayName("Cenários de RabbitMQ e Integração")
     class RabbitMQTests {
+
         @Test
         @DisplayName("Deve enviar requisição de pagamento para fila correta")
         void shouldSendPaymentRequestToQueue() {
@@ -231,23 +223,6 @@ class OrderUseCaseImplTest {
         }
 
         @Test
-        @DisplayName("Deve enviar pedido para cozinha quando pagamento aprovado")
-        void shouldSendOrderToKitchenWhenApproved() {
-            var items = new ArrayList<OrderItemDefinition>();
-            items.add(new OrderItemDefinition(10L, "Dummy", 1, BigDecimal.TEN, new ArrayList<>()));
-            var order = new OrderDefinition(1L, null, OrderStatus.PAGAMENTO_PENDENTE, items);
-
-            var request = new OrderStatusUpdateRequest(OrderStatus.PAGAMENTO_APROVADO);
-            when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
-            when(orderMapper.toKitchenRequest(order)).thenReturn(new OrderToKitchenRequest(1L, List.of()));
-
-            useCase.updateOrderStatus(1L, request);
-
-            assertThat(order.getStatus()).isEqualTo(OrderStatus.PAGAMENTO_APROVADO);
-            verify(rabbitTemplate).convertAndSend(eq("kitchen.order.received"), any(OrderToKitchenRequest.class));
-        }
-
-        @Test
         @DisplayName("Deve processar callback de QR Code")
         void shouldProcessQrCodeCallback() {
             var items = new ArrayList<OrderItemDefinition>();
@@ -255,6 +230,7 @@ class OrderUseCaseImplTest {
             var order = new OrderDefinition(55L, null, OrderStatus.INICIADO, items);
 
             when(orderRepository.findById(55L)).thenReturn(Optional.of(order));
+            when(orderRepository.save(order)).thenReturn(order);
 
             var responseMsg = new OrderPaymentCreatedMessageResponse(
                     "pay-uuid", 55L, BigDecimal.TEN, "http://qr.code", OrderStatus.PAGAMENTO_PENDENTE
@@ -272,14 +248,15 @@ class OrderUseCaseImplTest {
     class UpdateStatusTests {
 
         @Test
-        @DisplayName("Deve atualizar status com transição válida")
-        void shouldUpdateStatusSuccessfully() {
+        @DisplayName("Deve atualizar status INICIADO -> PAGAMENTO_PENDENTE")
+        void shouldUpdateStatusIníciadoToPendente() {
             var items = new ArrayList<OrderItemDefinition>();
             items.add(new OrderItemDefinition(10L, "Dummy", 1, BigDecimal.TEN, new ArrayList<>()));
             var order = new OrderDefinition(1L, null, OrderStatus.INICIADO, items);
             var request = new OrderStatusUpdateRequest(OrderStatus.PAGAMENTO_PENDENTE);
 
             when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+            when(orderRepository.save(order)).thenReturn(order);
 
             useCase.updateOrderStatus(1L, request);
 
@@ -288,11 +265,153 @@ class OrderUseCaseImplTest {
         }
 
         @Test
-        @DisplayName("Deve falhar com transição de status inválida")
-        void shouldFailInvalidTransition() {
+        @DisplayName("Deve atualizar status PAGAMENTO_PENDENTE -> PAGAMENTO_APROVADO e enviar para cozinha")
+        void shouldUpdateStatusPendentToAprovadoAndSendToKitchen() {
+            var items = new ArrayList<OrderItemDefinition>();
+            items.add(new OrderItemDefinition(10L, "Dummy", 1, BigDecimal.TEN, new ArrayList<>()));
+            var order = new OrderDefinition(2L, null, OrderStatus.PAGAMENTO_PENDENTE, items);
+            var request = new OrderStatusUpdateRequest(OrderStatus.PAGAMENTO_APROVADO);
+
+            when(orderRepository.findById(2L)).thenReturn(Optional.of(order));
+            when(orderRepository.save(order)).thenReturn(order);
+            when(orderMapper.toKitchenRequest(order)).thenReturn(new OrderToKitchenRequest(2L, List.of()));
+
+            useCase.updateOrderStatus(2L, request);
+
+            assertThat(order.getStatus()).isEqualTo(OrderStatus.PAGAMENTO_APROVADO);
+            verify(rabbitTemplate).convertAndSend(eq("kitchen.order.received"), any(OrderToKitchenRequest.class));
+            verify(orderRepository).save(order);
+        }
+
+        @Test
+        @DisplayName("Deve atualizar status PAGAMENTO_PENDENTE -> PAGAMENTO_RECUSADO")
+        void shouldUpdateStatusPendentToRecusado() {
+            var items = new ArrayList<OrderItemDefinition>();
+            items.add(new OrderItemDefinition(10L, "Dummy", 1, BigDecimal.TEN, new ArrayList<>()));
+            var order = new OrderDefinition(3L, null, OrderStatus.PAGAMENTO_PENDENTE, items);
+            var request = new OrderStatusUpdateRequest(OrderStatus.PAGAMENTO_RECUSADO);
+
+            when(orderRepository.findById(3L)).thenReturn(Optional.of(order));
+            when(orderRepository.save(order)).thenReturn(order);
+
+            useCase.updateOrderStatus(3L, request);
+
+            assertThat(order.getStatus()).isEqualTo(OrderStatus.PAGAMENTO_RECUSADO);
+            verify(orderRepository).save(order);
+
+            verify(rabbitTemplate, never()).convertAndSend(
+                    eq("kitchen.order.received"),
+                    any(OrderToKitchenRequest.class)
+            );
+        }
+
+        @Test
+        @DisplayName("Deve atualizar status PAGAMENTO_APROVADO -> CONCLUIDO")
+        void shouldUpdateStatusAprovadoToConcluido() {
+            var items = new ArrayList<OrderItemDefinition>();
+            items.add(new OrderItemDefinition(10L, "Item", 1, BigDecimal.TEN, new ArrayList<>()));
+            var order = new OrderDefinition(4L, null, OrderStatus.PAGAMENTO_APROVADO, items);
+            var request = new OrderStatusUpdateRequest(OrderStatus.CONCLUIDO);
+
+            when(orderRepository.findById(4L)).thenReturn(Optional.of(order));
+            when(orderRepository.save(order)).thenReturn(order);
+
+            useCase.updateOrderStatus(4L, request);
+
+            assertThat(order.getStatus()).isEqualTo(OrderStatus.CONCLUIDO);
+            verify(orderRepository).save(order);
+        }
+
+        @Test
+        @DisplayName("Deve lançar erro quando pedido está vazio")
+        void shouldThrowWhenOrderIsEmpty() {
+            var order = new OrderDefinition(1L, null, OrderStatus.INICIADO, new ArrayList<>());
+            var request = new OrderStatusUpdateRequest(OrderStatus.PAGAMENTO_PENDENTE);
+
+            when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+
+            assertThatThrownBy(() -> useCase.updateOrderStatus(1L, request))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("Não é possível mudar status de um pedido sem itens");
+        }
+
+        @Test
+        @DisplayName("Deve lançar erro se pedido não existir")
+        void shouldThrowIfOrderNotFoundWhenUpdatingStatus() {
+            when(orderRepository.findById(999L)).thenReturn(Optional.empty());
+            var request = new OrderStatusUpdateRequest(OrderStatus.PAGAMENTO_PENDENTE);
+
+            assertThatThrownBy(() -> useCase.updateOrderStatus(999L, request))
+                    .isInstanceOf(ResourceNotFoundException.class)
+                    .hasMessageContaining("Pedido não encontrado");
+        }
+
+        @Test
+        @DisplayName("Deve falhar com transição inválida INICIADO -> CONCLUIDO")
+        void shouldFailInvalidTransitionIníciadoToConcluido() {
             var items = new ArrayList<OrderItemDefinition>();
             items.add(new OrderItemDefinition(10L, "Dummy", 1, BigDecimal.TEN, new ArrayList<>()));
             var order = new OrderDefinition(1L, null, OrderStatus.INICIADO, items);
+            var request = new OrderStatusUpdateRequest(OrderStatus.CONCLUIDO);
+
+            when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+
+            assertThatThrownBy(() -> useCase.updateOrderStatus(1L, request))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("Transição de status inválida");
+        }
+
+        @Test
+        @DisplayName("Deve falhar com transição inválida INICIADO -> PAGAMENTO_APROVADO")
+        void shouldFailInvalidTransitionIníciadoToAprovado() {
+            var items = new ArrayList<OrderItemDefinition>();
+            items.add(new OrderItemDefinition(10L, "Dummy", 1, BigDecimal.TEN, new ArrayList<>()));
+            var order = new OrderDefinition(1L, null, OrderStatus.INICIADO, items);
+            var request = new OrderStatusUpdateRequest(OrderStatus.PAGAMENTO_APROVADO);
+
+            when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+
+            assertThatThrownBy(() -> useCase.updateOrderStatus(1L, request))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("Transição de status inválida");
+        }
+
+        @Test
+        @DisplayName("Deve falhar com transição inválida PAGAMENTO_APROVADO -> PAGAMENTO_PENDENTE")
+        void shouldFailInvalidTransitionAprovadoToPendente() {
+            var items = new ArrayList<OrderItemDefinition>();
+            items.add(new OrderItemDefinition(10L, "Dummy", 1, BigDecimal.TEN, new ArrayList<>()));
+            var order = new OrderDefinition(1L, null, OrderStatus.PAGAMENTO_APROVADO, items);
+            var request = new OrderStatusUpdateRequest(OrderStatus.PAGAMENTO_PENDENTE);
+
+            when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+
+            assertThatThrownBy(() -> useCase.updateOrderStatus(1L, request))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("Transição de status inválida");
+        }
+
+        @Test
+        @DisplayName("Deve falhar com transição inválida CONCLUIDO -> INICIADO")
+        void shouldFailInvalidTransitionConcluidoToIniciado() {
+            var items = new ArrayList<OrderItemDefinition>();
+            items.add(new OrderItemDefinition(10L, "Dummy", 1, BigDecimal.TEN, new ArrayList<>()));
+            var order = new OrderDefinition(1L, null, OrderStatus.CONCLUIDO, items);
+            var request = new OrderStatusUpdateRequest(OrderStatus.INICIADO);
+
+            when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+
+            assertThatThrownBy(() -> useCase.updateOrderStatus(1L, request))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("Transição de status inválida");
+        }
+
+        @Test
+        @DisplayName("Deve falhar com transição inválida PAGAMENTO_RECUSADO -> CONCLUIDO")
+        void shouldFailInvalidTransitionRecusadoToConcluido() {
+            var items = new ArrayList<OrderItemDefinition>();
+            items.add(new OrderItemDefinition(10L, "Dummy", 1, BigDecimal.TEN, new ArrayList<>()));
+            var order = new OrderDefinition(1L, null, OrderStatus.PAGAMENTO_RECUSADO, items);
             var request = new OrderStatusUpdateRequest(OrderStatus.CONCLUIDO);
 
             when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
@@ -306,6 +425,7 @@ class OrderUseCaseImplTest {
     @Nested
     @DisplayName("Cenários de Listagem")
     class ListOrdersTests {
+
         @Test
         @DisplayName("Deve listar pedidos filtrados por status")
         void shouldListOrdersByFilter() {
@@ -319,6 +439,50 @@ class OrderUseCaseImplTest {
 
             assertThat(result).hasSize(1);
             verify(orderRepository).findByFilters(statusList);
+        }
+
+        @Test
+        @DisplayName("Deve listar pedidos com múltiplos filtros de status")
+        void shouldListOrdersByMultipleFilters() {
+            var statusList = List.of(OrderStatus.INICIADO, OrderStatus.PAGAMENTO_PENDENTE);
+            var order1 = new OrderDefinition(1L, null, OrderStatus.INICIADO, new ArrayList<>());
+            var order2 = new OrderDefinition(2L, null, OrderStatus.PAGAMENTO_PENDENTE, new ArrayList<>());
+
+            when(orderRepository.findByFilters(statusList)).thenReturn(List.of(order1, order2));
+            when(orderMapper.toResponse(order1)).thenReturn(mock(OrderResponse.class));
+            when(orderMapper.toResponse(order2)).thenReturn(mock(OrderResponse.class));
+
+            var result = useCase.listAllOrdersByFilters(statusList);
+
+            assertThat(result).hasSize(2);
+            verify(orderRepository).findByFilters(statusList);
+        }
+
+        @Test
+        @DisplayName("Deve listar pedidos sem filtros (null)")
+        void shouldListOrdersWithoutFilters() {
+            var order1 = new OrderDefinition(1L, null, OrderStatus.INICIADO, new ArrayList<>());
+            var order2 = new OrderDefinition(2L, null, OrderStatus.PAGAMENTO_PENDENTE, new ArrayList<>());
+
+            when(orderRepository.findByFilters(null)).thenReturn(List.of(order1, order2));
+            when(orderMapper.toResponse(order1)).thenReturn(mock(OrderResponse.class));
+            when(orderMapper.toResponse(order2)).thenReturn(mock(OrderResponse.class));
+
+            var result = useCase.listAllOrdersByFilters(null);
+
+            assertThat(result).hasSize(2);
+            verify(orderRepository).findByFilters(null);
+        }
+
+        @Test
+        @DisplayName("Deve retornar lista vazia quando não há pedidos")
+        void shouldReturnEmptyListWhenNoOrders() {
+            when(orderRepository.findByFilters(null)).thenReturn(List.of());
+
+            var result = useCase.listAllOrdersByFilters(null);
+
+            assertThat(result).isEmpty();
+            verify(orderRepository).findByFilters(null);
         }
     }
 }
