@@ -24,7 +24,7 @@ jobs:
       - name: Build, Test and Analyze
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: ./mvnw -B verify sonar:sonar -Dsonar.projectKey=pos-tech-fiap-group_snackorderapp-pedido
+        run: ./mvnw -B verify sonar:sonar -Dsonar.projectKey=pos-tech-fiap-group_snack-order-app-order-service
 
       - name: Generate JaCoCo Badge
         if: github.ref == 'refs/heads/main'
