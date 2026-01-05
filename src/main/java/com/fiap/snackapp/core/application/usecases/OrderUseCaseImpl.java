@@ -110,9 +110,9 @@ public class OrderUseCaseImpl implements OrderUseCase {
         OrderStatus current = order.getStatus();
         OrderStatus next = request.status();
 
-//        if (!isNextValid(current, next)) {
-//            throw new IllegalStateException("Transição de status inválida: " + current + " → " + next);
-//        }
+        if (!isNextValid(current, next)) {
+            throw new IllegalStateException("Transição de status inválida: " + current + " → " + next);
+        }
 
         order.setStatus(next);
         orderRepository.save(order);
