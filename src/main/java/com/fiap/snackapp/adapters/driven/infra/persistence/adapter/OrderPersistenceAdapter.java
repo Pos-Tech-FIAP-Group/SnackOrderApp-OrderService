@@ -10,6 +10,7 @@ import com.fiap.snackapp.core.domain.model.OrderDefinition;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -22,6 +23,7 @@ public class OrderPersistenceAdapter implements OrderRepositoryPort {
     private final OrderPersistenceMapper mapper;
 
     @Override
+    @Transactional
     public OrderDefinition save(OrderDefinition order) {
         OrderEntity entity = mapper.toEntity(order);
         OrderEntity saved = jpaRepository.save(entity);
@@ -29,6 +31,7 @@ public class OrderPersistenceAdapter implements OrderRepositoryPort {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<OrderDefinition> findById(Long id) {
         return jpaRepository.findById(id).map(mapper::toDomain);
     }
