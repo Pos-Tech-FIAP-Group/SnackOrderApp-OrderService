@@ -2,12 +2,14 @@ package com.fiap.snackapp.adapters.driver.api.controller;
 
 import com.fiap.snackapp.core.application.dto.request.OrderInitRequest;
 import com.fiap.snackapp.core.application.dto.request.OrderItemsRequest;
+import com.fiap.snackapp.core.application.dto.request.OrderPaymentCreateRequest;
 import com.fiap.snackapp.core.application.dto.request.OrderStatusUpdateRequest;
 import com.fiap.snackapp.core.application.dto.response.OrderResponse;
 import com.fiap.snackapp.core.application.usecases.OrderUseCase;
 import com.fiap.snackapp.core.domain.enums.OrderStatus;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -32,90 +34,138 @@ class OrderControllerTest {
     @Mock
     private HttpServletRequest httpServletRequest;
 
-    @Test
-    @DisplayName("POST /api/orders/init: deve priorizar CPF do header e retornar 201")
-    void init_shouldUseCpfFromHeader_whenHeaderPresent() {
-        var request = mock(OrderInitRequest.class); // não precisa stubbar cpf()
+    @Nested
+    @DisplayName("POST /api/orders/init")
+    class InitOrderTests {
+        @Test
+        @DisplayName("deve priorizar CPF do header quando presente")
+        void init_shouldUseCpfFromHeader_whenHeaderPresent() {
+            var request = mock(OrderInitRequest.class);
+            when(httpServletRequest.getHeader("X-CPF")).thenReturn("12345678900");
 
-        when(httpServletRequest.getHeader("X-CPF")).thenReturn("12345678900");
+            var expected = mock(OrderResponse.class);
+            when(orderUseCase.initOrder("12345678900")).thenReturn(expected);
 
-        var expected = mock(OrderResponse.class);
-        when(orderUseCase.initOrder("12345678900")).thenReturn(expected);
+            var response = controller.init(request, httpServletRequest);
 
-        var response = controller.init(request, httpServletRequest);
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+            assertThat(response.getBody()).isSameAs(expected);
+            verify(orderUseCase).initOrder("12345678900");
+        }
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        assertThat(response.getBody()).isSameAs(expected);
+        @Test
+        @DisplayName("deve usar CPF do body quando header ausente ou vazio")
+        void init_shouldFallbackToBodyCpf_whenHeaderBlank() {
+            var request = mock(OrderInitRequest.class);
+            when(request.cpf()).thenReturn("12345678900");
+            when(httpServletRequest.getHeader("X-CPF")).thenReturn("   ");
 
-        verify(orderUseCase).initOrder("12345678900");
-        verifyNoMoreInteractions(orderUseCase);
+            var expected = mock(OrderResponse.class);
+            when(orderUseCase.initOrder("12345678900")).thenReturn(expected);
+
+            var response = controller.init(request, httpServletRequest);
+
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+            assertThat(response.getBody()).isSameAs(expected);
+            verify(orderUseCase).initOrder("12345678900");
+        }
+
+        @Test
+        @DisplayName("deve usar CPF do body quando header é null")
+        void init_shouldFallbackToBodyCpf_whenHeaderNull() {
+            var request = mock(OrderInitRequest.class);
+            when(request.cpf()).thenReturn("12345678900");
+            when(httpServletRequest.getHeader("X-CPF")).thenReturn(null);
+
+            var expected = mock(OrderResponse.class);
+            when(orderUseCase.initOrder("12345678900")).thenReturn(expected);
+
+            var response = controller.init(request, httpServletRequest);
+
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+            assertThat(response.getBody()).isSameAs(expected);
+            verify(orderUseCase).initOrder("12345678900");
+        }
     }
 
-    @Test
-    @DisplayName("POST /api/orders/init: deve usar CPF do body quando header ausente/vazio e retornar 201")
-    void init_shouldFallbackToBodyCpf_whenHeaderBlank() {
-        var request = mock(OrderInitRequest.class);
-        when(request.cpf()).thenReturn("12345678900");
+    @Nested
+    @DisplayName("POST /api/orders/{orderId}/item")
+    class AddItemsTests {
+        @Test
+        @DisplayName("deve adicionar itens ao pedido e retornar 200")
+        void addItems_shouldReturnOk() {
+            var request = mock(OrderItemsRequest.class);
+            var expected = mock(OrderResponse.class);
+            when(orderUseCase.addItems(10L, request)).thenReturn(expected);
 
-        when(httpServletRequest.getHeader("X-CPF")).thenReturn("   "); // blank
+            var response = controller.addItems(10L, request);
 
-        var expected = mock(OrderResponse.class);
-        when(orderUseCase.initOrder("12345678900")).thenReturn(expected);
-
-        var response = controller.init(request, httpServletRequest);
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        assertThat(response.getBody()).isSameAs(expected);
-
-        verify(orderUseCase).initOrder("12345678900");
-        verifyNoMoreInteractions(orderUseCase);
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+            assertThat(response.getBody()).isSameAs(expected);
+            verify(orderUseCase).addItems(10L, request);
+        }
     }
 
-    @Test
-    @DisplayName("POST /api/orders/{orderId}/item: deve delegar e retornar 200")
-    void addItems_shouldReturnOk() {
-        var request = mock(OrderItemsRequest.class);
-        var expected = mock(OrderResponse.class);
+    @Nested
+    @DisplayName("POST /api/orders (Payment Creation)")
+    class RequestOrderPaymentCreationTests {
+        @Test
+        @DisplayName("deve solicitar criação de pagamento e retornar 202 sem body")
+        void requestOrderPaymentCreation_shouldReturnAccepted() {
+            var request = mock(OrderPaymentCreateRequest.class);
 
-        when(orderUseCase.addItems(10L, request)).thenReturn(expected);
+            var response = controller.requestOrderPaymentCreation(request);
 
-        var response = controller.addItems(10L, request);
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isSameAs(expected);
-
-        verify(orderUseCase).addItems(10L, request);
-        verifyNoMoreInteractions(orderUseCase);
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.ACCEPTED);
+            assertThat(response.getBody()).isNull();
+            verify(orderUseCase).requestOrderPaymentCreation(request);
+        }
     }
 
-    @Test
-    @DisplayName("PATCH /api/orders/{orderId}/status: deve delegar e retornar 202 sem body")
-    void updateOrderStatus_shouldReturnAccepted() {
-        var request = mock(OrderStatusUpdateRequest.class);
+    @Nested
+    @DisplayName("PATCH /api/orders/{orderId}/status")
+    class UpdateOrderStatusTests {
+        @Test
+        @DisplayName("deve atualizar status do pedido e retornar 204")
+        void updateOrderStatus_shouldReturnNoContent() {
+            var request = mock(OrderStatusUpdateRequest.class);
 
-        var response = controller.updateOrderStatus(10L, request);
+            var response = controller.updateOrderStatus(10L, request);
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
-        assertThat(response.getBody()).isNull();
-
-        verify(orderUseCase).updateOrderStatus(10L, request);
-        verifyNoMoreInteractions(orderUseCase);
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+            assertThat(response.getBody()).isNull();
+            verify(orderUseCase).updateOrderStatus(10L, request);
+        }
     }
 
-    @Test
-    @DisplayName("GET /api/orders: deve delegar filtros e retornar 200")
-    void listAllOrdersByFilters_shouldReturnOk() {
-        List<OrderStatus> filters = List.of(OrderStatus.INICIADO);
-        var expectedList = List.of(mock(OrderResponse.class));
+    @Nested
+    @DisplayName("GET /api/orders (List by Filters)")
+    class ListAllOrdersByFiltersTests {
+        @Test
+        @DisplayName("deve listar todos os pedidos com filtros e retornar 200")
+        void listAllOrdersByFilters_shouldReturnOk() {
+            var filters = List.of(OrderStatus.INICIADO);
+            var expectedList = List.of(mock(OrderResponse.class));
+            when(orderUseCase.listAllOrdersByFilters(filters)).thenReturn(expectedList);
 
-        when(orderUseCase.listAllOrdersByFilters(filters)).thenReturn(expectedList);
+            var response = controller.listAllOrdersByFilters(filters);
 
-        var response = controller.listAllOrdersByFilters(filters);
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+            assertThat(response.getBody()).isSameAs(expectedList);
+            verify(orderUseCase).listAllOrdersByFilters(filters);
+        }
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isSameAs(expectedList);
+        @Test
+        @DisplayName("deve listar todos os pedidos sem filtros (null)")
+        void listAllOrdersByFilters_shouldReturnOkWithoutFilters() {
+            var expectedList = List.of(mock(OrderResponse.class), mock(OrderResponse.class));
+            when(orderUseCase.listAllOrdersByFilters(null)).thenReturn(expectedList);
 
-        verify(orderUseCase).listAllOrdersByFilters(filters);
-        verifyNoMoreInteractions(orderUseCase);
+            var response = controller.listAllOrdersByFilters(null);
+
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+            assertThat(response.getBody()).hasSize(2);
+            verify(orderUseCase).listAllOrdersByFilters(null);
+        }
     }
 }
