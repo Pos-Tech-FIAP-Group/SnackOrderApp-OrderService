@@ -39,9 +39,7 @@ class AddOnPersistenceAdapterIntegrationTest {
     private AddOnRepositoryPort addOnRepositoryPort;
 
     private Long baconId;
-    private Long queijoId;
     private Long cebolaId;
-    private Long refrigeranteId;
 
     @BeforeEach
     void setUp() {
@@ -59,9 +57,7 @@ class AddOnPersistenceAdapterIntegrationTest {
         var saved = jpaRepository.saveAllAndFlush(List.of(bacon, queijo, cebola, refrigerante));
 
         baconId = saved.get(0).getId();
-        queijoId = saved.get(1).getId();
         cebolaId = saved.get(2).getId();
-        refrigeranteId = saved.get(3).getId();
     }
 
     @Nested
@@ -122,8 +118,9 @@ class AddOnPersistenceAdapterIntegrationTest {
         void shouldFilterByActiveTrueAndCategoryLanche() {
             var result = addOnRepositoryPort.findByFilters(true, Category.LANCHE);
 
-            assertThat(result).hasSize(2);
-            assertThat(result).allMatch(a -> a.active() && a.category() == Category.LANCHE);
+            assertThat(result)
+                    .hasSize(2)
+                    .allMatch(a -> a.active() && a.category() == Category.LANCHE);
         }
 
         @Test
@@ -132,7 +129,7 @@ class AddOnPersistenceAdapterIntegrationTest {
             var result = addOnRepositoryPort.findByFilters(true, Category.BEBIDA);
 
             assertThat(result).hasSize(1);
-            assertThat(result.get(0).name()).isEqualTo("Refrigerante");
+            assertThat(result.getFirst().name()).isEqualTo("Refrigerante");
         }
 
         @Test
@@ -141,8 +138,8 @@ class AddOnPersistenceAdapterIntegrationTest {
             var result = addOnRepositoryPort.findByFilters(false, Category.LANCHE);
 
             assertThat(result).hasSize(1);
-            assertThat(result.get(0).name()).isEqualTo("Cebola");
-            assertThat(result.get(0).active()).isFalse();
+            assertThat(result.getFirst().name()).isEqualTo("Cebola");
+            assertThat(result.getFirst().active()).isFalse();
         }
 
         @Test
@@ -150,8 +147,9 @@ class AddOnPersistenceAdapterIntegrationTest {
         void shouldFilterByActiveTrueAndCategoryNull() {
             var result = addOnRepositoryPort.findByFilters(true, null);
 
-            assertThat(result).hasSize(3);
-            assertThat(result).allMatch(AddOnDefinition::active);
+            assertThat(result)
+                    .hasSize(3)
+                    .allMatch(AddOnDefinition::active);
         }
 
         @Test
@@ -160,7 +158,7 @@ class AddOnPersistenceAdapterIntegrationTest {
             var result = addOnRepositoryPort.findByFilters(false, null);
 
             assertThat(result).hasSize(1);
-            assertThat(result.get(0).name()).isEqualTo("Cebola");
+            assertThat(result.getFirst().name()).isEqualTo("Cebola");
         }
 
         @Test
@@ -168,7 +166,7 @@ class AddOnPersistenceAdapterIntegrationTest {
         void shouldFilterByActiveNullAndCategoryLanche() {
             var result = addOnRepositoryPort.findByFilters(null, Category.LANCHE);
 
-            assertThat(result).hasSize(3); // Bacon, Queijo (ativos) + Cebola (inativo)
+            assertThat(result).hasSize(3);
             assertThat(result).extracting(AddOnDefinition::name)
                     .containsExactlyInAnyOrder("Bacon", "Queijo", "Cebola");
         }
@@ -179,7 +177,7 @@ class AddOnPersistenceAdapterIntegrationTest {
             var result = addOnRepositoryPort.findByFilters(null, Category.BEBIDA);
 
             assertThat(result).hasSize(1);
-            assertThat(result.get(0).name()).isEqualTo("Refrigerante");
+            assertThat(result.getFirst().name()).isEqualTo("Refrigerante");
         }
 
         @Test
@@ -187,7 +185,7 @@ class AddOnPersistenceAdapterIntegrationTest {
         void shouldFilterByActiveNullAndCategoryNull() {
             var result = addOnRepositoryPort.findByFilters(null, null);
 
-            assertThat(result).hasSize(4); // Bacon, Queijo, Cebola, Refrigerante
+            assertThat(result).hasSize(4);
             assertThat(result).extracting(AddOnDefinition::name)
                     .containsExactlyInAnyOrder("Bacon", "Queijo", "Cebola", "Refrigerante");
         }

@@ -36,6 +36,7 @@ public class GlobalApiExceptionHandler extends ResponseEntityExceptionHandler {
     }
 
     @Override
+    @SuppressWarnings("java:S2638")
     protected ResponseEntity<Object> handleMethodArgumentNotValid(
             MethodArgumentNotValidException ex,
             @NonNull HttpHeaders headers,

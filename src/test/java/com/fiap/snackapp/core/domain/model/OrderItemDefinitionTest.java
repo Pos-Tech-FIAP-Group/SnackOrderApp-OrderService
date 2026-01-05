@@ -99,7 +99,7 @@ class OrderItemDefinitionTest {
                 .isEqualTo(item2)
                 .hasSameHashCodeAs(item2)
                 .isNotEqualTo(item3)
-                .isNotEqualTo(null);
+                .isNotNull();
 
         // ToString
         assertThat(item1.toString())

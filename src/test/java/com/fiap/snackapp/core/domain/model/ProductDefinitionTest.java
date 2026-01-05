@@ -64,8 +64,6 @@ class ProductDefinitionTest {
         // Teste getAppliedAddOns() deve retornar lista vazia imutável
         List<Product.AppliedAddOn> addOns = product.getAppliedAddOns();
         assertThat(addOns).isEmpty();
-        // Verifica se é imutável (opcional, mas boa prática para Collections.emptyList())
-        // assertThatThrownBy(() -> addOns.add(null)).isInstanceOf(UnsupportedOperationException.class);
     }
 
     @Test
@@ -80,7 +78,7 @@ class ProductDefinitionTest {
                 .isEqualTo(prod2)
                 .hasSameHashCodeAs(prod2)
                 .isNotEqualTo(prod3)
-                .isNotEqualTo(null)
+                .isNotNull()
                 .isNotEqualTo(new Object());
 
         // ToString

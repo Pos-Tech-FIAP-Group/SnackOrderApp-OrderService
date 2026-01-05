@@ -148,7 +148,7 @@ class OrderUseCaseImplTest {
 
             when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
             when(productRepository.findById(10L)).thenReturn(Optional.of(product));
-            when(orderItemMapper.toDomain(eq(product), eq(itemRequest), eq(List.of())))
+            when(orderItemMapper.toDomain(product, itemRequest, List.of()))
                     .thenReturn(new OrderItemDefinition(10L, "Lanche", 1, BigDecimal.TEN, new ArrayList<>()));
             when(orderRepository.save(order)).thenReturn(order);
             when(orderMapper.toResponse(order)).thenReturn(mock(OrderResponse.class));
@@ -216,9 +216,9 @@ class OrderUseCaseImplTest {
             useCase.requestOrderPaymentCreation(request);
 
             verify(rabbitTemplate).convertAndSend(
-                    eq("payment.exchange"),
-                    eq("payment.create"),
-                    eq(request)
+                    "payment.exchange",
+                    "payment.create",
+                    request
             );
         }
 

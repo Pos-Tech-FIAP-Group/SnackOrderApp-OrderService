@@ -88,7 +88,7 @@ public class OrderPersistenceMapper {
                                 );
                                 return new AppliedAddOn(def, addOn.getQuantity());
                             })
-                            .collect(Collectors.toList());
+                            .toList();
 
                     return new OrderItemDefinition(
                             item.getProduct().getId(),
@@ -98,7 +98,7 @@ public class OrderPersistenceMapper {
                             addOns
                     );
                 })
-                .collect(Collectors.toList());
+                .toList();
 
         return new OrderDefinition(
                 entity.getId(),

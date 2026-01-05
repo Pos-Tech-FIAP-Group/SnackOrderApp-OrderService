@@ -22,7 +22,7 @@ class EmailTest {
         var email = new Email(validEmail);
 
         assertThat(email.value()).isEqualTo(validEmail);
-        assertThat(email.toString()).isEqualTo(validEmail);
+        assertThat(email.toString()).hasToString(validEmail);
     }
 
     @ParameterizedTest

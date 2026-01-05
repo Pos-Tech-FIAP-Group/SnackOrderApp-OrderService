@@ -18,7 +18,7 @@ class CPFTest {
         var cpf = new CPF(validValue);
 
         assertThat(cpf.value()).isEqualTo(validValue);
-        assertThat(cpf.toString()).isEqualTo(validValue);
+        assertThat(cpf.toString()).hasToString(validValue);
     }
 
     @ParameterizedTest

@@ -74,7 +74,7 @@ class CustomerPersistenceAdapterIntegrationTest {
         assertThat(saved.id()).isNotNull();
         assertThat(saved.name()).isEqualTo("Maria");
         assertThat(saved.email().toString()).contains("maria"); // depende do seu VO
-        assertThat(saved.cpf().toString()).isEqualTo("98765432100");
+        assertThat(saved.cpf().toString()).hasToString("98765432100");
     }
 
     @Test
@@ -84,7 +84,7 @@ class CustomerPersistenceAdapterIntegrationTest {
 
         assertThat(result).isPresent();
         assertThat(result.get().name()).isEqualTo("João");
-        assertThat(result.get().cpf().toString()).isEqualTo(cpfValue);
+        assertThat(result.get().cpf().toString()).hasToString(cpfValue);
     }
 
     @Test

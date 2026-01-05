@@ -129,7 +129,7 @@ class DynamicAddOnDecoratorTest {
                 .isEqualTo(sameDecorator)
                 .hasSameHashCodeAs(sameDecorator)
                 .isNotEqualTo(differentDecorator)
-                .isNotEqualTo(null)
+                .isNotNull()
                 .isNotEqualTo(new Object());
 
         // Testa toString (só para garantir que não quebra e contém o nome da classe)
