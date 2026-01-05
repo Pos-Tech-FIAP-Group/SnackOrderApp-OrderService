@@ -18,7 +18,6 @@ import com.fiap.snackapp.core.domain.model.*;
 import com.fiap.snackapp.core.domain.vo.CPF;
 import com.fiap.snackapp.core.domain.vo.Email;
 import lombok.RequiredArgsConstructor;
-import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 
@@ -90,6 +89,10 @@ public class OrderUseCaseImpl implements OrderUseCase {
         );
     }
 
+    public void sendOrderToKitchen(OrderDefinition order) {
+        rabbitTemplate.convertAndSend("kitchen.order.received", order);
+    }
+
     @Override
     public void updateOrderWithQrCode(OrderPaymentCreatedMessageResponse orderPaymentCreatedMessageResponse) {
         updateOrderStatus(orderPaymentCreatedMessageResponse.orderId(),
@@ -116,6 +119,9 @@ public class OrderUseCaseImpl implements OrderUseCase {
         order.setStatus(next);
         orderRepository.save(order);
 
+        if (order.getStatus().equals(OrderStatus.PAGAMENTO_APROVADO)) {
+            sendOrderToKitchen(order);
+        }
     }
 
     @Override
@@ -129,7 +135,7 @@ public class OrderUseCaseImpl implements OrderUseCase {
     private boolean isNextValid(OrderStatus current, OrderStatus next) {
         return switch (current) {
             case INICIADO -> next == OrderStatus.PAGAMENTO_PENDENTE;
-            case PAGAMENTO_PENDENTE -> next == OrderStatus.PAGAMENTO_APROVADO ||  next == OrderStatus.PAGAMENTO_RECUSADO;
+            case PAGAMENTO_PENDENTE -> next == OrderStatus.PAGAMENTO_APROVADO || next == OrderStatus.PAGAMENTO_RECUSADO;
             case PAGAMENTO_APROVADO -> next == OrderStatus.CONCLUIDO;
             default -> false;
         };
