@@ -1,9 +1,6 @@
 package com.fiap.snackapp.core.application.usecases;
 
-import com.fiap.snackapp.core.application.dto.request.ItemRequest;
-import com.fiap.snackapp.core.application.dto.request.OrderItemsRequest;
-import com.fiap.snackapp.core.application.dto.request.OrderPaymentCreateRequest;
-import com.fiap.snackapp.core.application.dto.request.OrderStatusUpdateRequest;
+import com.fiap.snackapp.core.application.dto.request.*;
 import com.fiap.snackapp.core.application.dto.response.OrderPaymentCreatedMessageResponse;
 import com.fiap.snackapp.core.application.dto.response.OrderResponse;
 import com.fiap.snackapp.core.application.exception.ResourceNotFoundException;
@@ -90,7 +87,8 @@ public class OrderUseCaseImpl implements OrderUseCase {
     }
 
     public void sendOrderToKitchen(OrderDefinition order) {
-        rabbitTemplate.convertAndSend("kitchen.order.received", order);
+        OrderToKitchenRequest orderToKitchen = orderMapper.toKitchenRequest(order);
+        rabbitTemplate.convertAndSend("kitchen.order.received", orderToKitchen);
     }
 
     @Override
@@ -112,9 +110,9 @@ public class OrderUseCaseImpl implements OrderUseCase {
         OrderStatus current = order.getStatus();
         OrderStatus next = request.status();
 
-        if (!isNextValid(current, next)) {
-            throw new IllegalStateException("Transição de status inválida: " + current + " → " + next);
-        }
+//        if (!isNextValid(current, next)) {
+//            throw new IllegalStateException("Transição de status inválida: " + current + " → " + next);
+//        }
 
         order.setStatus(next);
         orderRepository.save(order);
