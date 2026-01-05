@@ -14,6 +14,5 @@ public class OrderPaymentCreatedListener {
     @RabbitListener(queues = "payment.created.queue")
     public void handleOrderPaymentCreated(OrderPaymentCreatedMessageResponse orderPaymentCreatedMessageResponse) {
         orderUseCase.updateOrderWithQrCode(orderPaymentCreatedMessageResponse);
-
     }
 }
