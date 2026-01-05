@@ -95,7 +95,7 @@ class OrderControllerTest {
 
         var response = controller.updateOrderStatus(10L, request);
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.ACCEPTED);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
         assertThat(response.getBody()).isNull();
 
         verify(orderUseCase).updateOrderStatus(10L, request);

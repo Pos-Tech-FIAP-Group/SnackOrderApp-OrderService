@@ -90,7 +90,7 @@ class OrderPersistenceAdapterIntegrationTest {
 
         assertThat(result).isPresent();
         assertThat(result.get().getId()).isEqualTo(orderRecebidoId);
-        assertThat(result.get().getStatus()).isEqualTo(OrderStatus.INICIADO);
+        assertThat(result.get().getStatus()).isEqualTo(OrderStatus.PAGAMENTO_PENDENTE);
     }
 
     @Test
