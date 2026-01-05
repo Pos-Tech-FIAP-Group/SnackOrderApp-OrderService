@@ -29,19 +29,6 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: ./mvnw -B verify sonar:sonar -Dsonar.projectKey=pos-tech-fiap-group_snack-order-app-order-service
 
-      - name: Generate JaCoCo Badge
-        if: github.ref == 'refs/heads/main'
-        uses: cicirello/jacoco-badge-generator@v2
-        with:
-          generate-branches-badge: true
-
-      - name: Upload JaCoCo Report
-        uses: actions/upload-artifact@v4
-        with:
-          name: jacoco-html-report
-          path: target/site/jacoco/
-          retention-days: 5
-
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
         with:
