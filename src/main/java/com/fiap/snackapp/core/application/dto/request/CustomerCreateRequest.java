@@ -1,7 +1,7 @@
 package com.fiap.snackapp.core.application.dto.request;
 
-import com.fiap.snackapp.core.application.validation.CPF;
 
+import org.hibernate.validator.constraints.br.CPF;
 
 public record CustomerCreateRequest(
     String name,
