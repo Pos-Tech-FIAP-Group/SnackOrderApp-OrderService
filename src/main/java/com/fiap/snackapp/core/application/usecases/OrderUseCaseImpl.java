@@ -86,6 +86,7 @@ public class OrderUseCaseImpl implements OrderUseCase {
         );
     }
 
+    @Override
     public void sendOrderToKitchen(OrderDefinition order) {
         OrderToKitchenRequest orderToKitchen = orderMapper.toKitchenRequest(order);
         rabbitTemplate.convertAndSend("kitchen.order.received", orderToKitchen);
@@ -99,7 +100,7 @@ public class OrderUseCaseImpl implements OrderUseCase {
     }
 
     @Override
-    public void updateOrderStatus(Long orderId, OrderStatusUpdateRequest request) {
+    public OrderDefinition updateOrderStatus(Long orderId, OrderStatusUpdateRequest request) {
         OrderDefinition order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Pedido não encontrado: " + orderId));
 
@@ -115,11 +116,7 @@ public class OrderUseCaseImpl implements OrderUseCase {
         }
 
         order.setStatus(next);
-        orderRepository.save(order);
-
-        if (order.getStatus().equals(OrderStatus.PAGAMENTO_APROVADO)) {
-            sendOrderToKitchen(order);
-        }
+        return orderRepository.save(order);
     }
 
     @Override
@@ -134,6 +131,7 @@ public class OrderUseCaseImpl implements OrderUseCase {
         return switch (current) {
             case INICIADO -> next == OrderStatus.PAGAMENTO_PENDENTE;
             case PAGAMENTO_PENDENTE -> next == OrderStatus.PAGAMENTO_APROVADO || next == OrderStatus.PAGAMENTO_RECUSADO;
+            case PAGAMENTO_RECUSADO -> next == OrderStatus.CANCELADO || next == OrderStatus.PAGAMENTO_PENDENTE;
             case PAGAMENTO_APROVADO -> next == OrderStatus.CONCLUIDO;
             default -> false;
         };

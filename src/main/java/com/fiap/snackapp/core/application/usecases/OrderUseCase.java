@@ -6,6 +6,7 @@ import com.fiap.snackapp.core.application.dto.request.OrderStatusUpdateRequest;
 import com.fiap.snackapp.core.application.dto.response.OrderPaymentCreatedMessageResponse;
 import com.fiap.snackapp.core.application.dto.response.OrderResponse;
 import com.fiap.snackapp.core.domain.enums.OrderStatus;
+import com.fiap.snackapp.core.domain.model.OrderDefinition;
 
 import java.util.List;
 
@@ -14,11 +15,13 @@ public interface OrderUseCase {
 
     OrderResponse addItems(Long orderId, OrderItemsRequest request);
 
-    void updateOrderStatus(Long orderId, OrderStatusUpdateRequest request);
+    OrderDefinition updateOrderStatus(Long orderId, OrderStatusUpdateRequest request);
 
     List<OrderResponse> listAllOrdersByFilters(List<OrderStatus> orderStatus);
 
     void requestOrderPaymentCreation(OrderPaymentCreateRequest orderPaymentCreateRequest);
 
     void updateOrderWithQrCode(OrderPaymentCreatedMessageResponse orderPaymentCreatedMessageResponse);
+
+    void sendOrderToKitchen(OrderDefinition order);
 }

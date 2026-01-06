@@ -5,5 +5,6 @@ public enum OrderStatus {
     PAGAMENTO_PENDENTE,
     PAGAMENTO_RECUSADO,
     PAGAMENTO_APROVADO,
+    CANCELADO,
     CONCLUIDO
 }
