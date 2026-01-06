@@ -59,7 +59,6 @@ class OrderUseCaseImplTest {
     @Nested
     @DisplayName("Cenários de Início de Pedido")
     class StartOrderTests {
-
         @Test
         @DisplayName("Deve iniciar pedido para cliente novo (salva cliente)")
         void shouldStartOrderForNewCustomer() {
@@ -107,7 +106,6 @@ class OrderUseCaseImplTest {
     @Nested
     @DisplayName("Cenários de Adição de Itens")
     class AddItemsTests {
-
         @Test
         @DisplayName("Deve adicionar itens com adicionais ao pedido")
         void shouldAddItemsWithAddOns() {
@@ -223,7 +221,23 @@ class OrderUseCaseImplTest {
         }
 
         @Test
-        @DisplayName("Deve processar callback de QR Code")
+        @DisplayName("Deve enviar pedido para cozinha")
+        void shouldSendOrderToKitchen() {
+            // Arrange
+            var order = new OrderDefinition(10L, null, OrderStatus.PAGAMENTO_APROVADO, List.of());
+            var kitchenRequest = new OrderToKitchenRequest(10L, List.of());
+
+            when(orderMapper.toKitchenRequest(order)).thenReturn(kitchenRequest);
+
+            // Act
+            useCase.sendOrderToKitchen(order);
+
+            // Assert
+            verify(rabbitTemplate).convertAndSend("kitchen.order.received", kitchenRequest);
+        }
+
+        @Test
+        @DisplayName("Deve processar callback de QR Code (atualiza status)")
         void shouldProcessQrCodeCallback() {
             var items = new ArrayList<OrderItemDefinition>();
             items.add(new OrderItemDefinition(10L, "Item", 1, BigDecimal.TEN, new ArrayList<>()));
@@ -249,7 +263,7 @@ class OrderUseCaseImplTest {
 
         @Test
         @DisplayName("Deve atualizar status INICIADO -> PAGAMENTO_PENDENTE")
-        void shouldUpdateStatusIníciadoToPendente() {
+        void shouldUpdateStatusIniciadoToPendente() {
             var items = new ArrayList<OrderItemDefinition>();
             items.add(new OrderItemDefinition(10L, "Dummy", 1, BigDecimal.TEN, new ArrayList<>()));
             var order = new OrderDefinition(1L, null, OrderStatus.INICIADO, items);
@@ -265,8 +279,9 @@ class OrderUseCaseImplTest {
         }
 
         @Test
-        @DisplayName("Deve atualizar status PAGAMENTO_PENDENTE -> PAGAMENTO_APROVADO e enviar para cozinha")
-        void shouldUpdateStatusPendentToAprovadoAndSendToKitchen() {
+        @DisplayName("Deve atualizar status PAGAMENTO_PENDENTE -> PAGAMENTO_APROVADO")
+        void shouldUpdateStatusPendenteToAprovado() {
+            // Arrange
             var items = new ArrayList<OrderItemDefinition>();
             items.add(new OrderItemDefinition(10L, "Dummy", 1, BigDecimal.TEN, new ArrayList<>()));
             var order = new OrderDefinition(2L, null, OrderStatus.PAGAMENTO_PENDENTE, items);
@@ -274,18 +289,23 @@ class OrderUseCaseImplTest {
 
             when(orderRepository.findById(2L)).thenReturn(Optional.of(order));
             when(orderRepository.save(order)).thenReturn(order);
-            when(orderMapper.toKitchenRequest(order)).thenReturn(new OrderToKitchenRequest(2L, List.of()));
 
+            // Act
             useCase.updateOrderStatus(2L, request);
 
+            // Assert
             assertThat(order.getStatus()).isEqualTo(OrderStatus.PAGAMENTO_APROVADO);
-            verify(rabbitTemplate).convertAndSend(eq("kitchen.order.received"), any(OrderToKitchenRequest.class));
             verify(orderRepository).save(order);
+
+            // Garante que NÃO chama a fila de cozinha nem o mapper
+            verifyNoInteractions(rabbitTemplate);
+            verify(orderMapper, never()).toKitchenRequest(any());
         }
+
 
         @Test
         @DisplayName("Deve atualizar status PAGAMENTO_PENDENTE -> PAGAMENTO_RECUSADO")
-        void shouldUpdateStatusPendentToRecusado() {
+        void shouldUpdateStatusPendenteToRecusado() {
             var items = new ArrayList<OrderItemDefinition>();
             items.add(new OrderItemDefinition(10L, "Dummy", 1, BigDecimal.TEN, new ArrayList<>()));
             var order = new OrderDefinition(3L, null, OrderStatus.PAGAMENTO_PENDENTE, items);
@@ -298,11 +318,40 @@ class OrderUseCaseImplTest {
 
             assertThat(order.getStatus()).isEqualTo(OrderStatus.PAGAMENTO_RECUSADO);
             verify(orderRepository).save(order);
+        }
 
-            verify(rabbitTemplate, never()).convertAndSend(
-                    eq("kitchen.order.received"),
-                    any(OrderToKitchenRequest.class)
-            );
+        @Test
+        @DisplayName("Deve atualizar status PAGAMENTO_RECUSADO -> CANCELADO")
+        void shouldUpdateStatusRecusadoToCancelado() {
+            var items = new ArrayList<OrderItemDefinition>();
+            items.add(new OrderItemDefinition(10L, "Dummy", 1, BigDecimal.TEN, new ArrayList<>()));
+            var order = new OrderDefinition(5L, null, OrderStatus.PAGAMENTO_RECUSADO, items);
+            var request = new OrderStatusUpdateRequest(OrderStatus.CANCELADO);
+
+            when(orderRepository.findById(5L)).thenReturn(Optional.of(order));
+            when(orderRepository.save(order)).thenReturn(order);
+
+            useCase.updateOrderStatus(5L, request);
+
+            assertThat(order.getStatus()).isEqualTo(OrderStatus.CANCELADO);
+            verify(orderRepository).save(order);
+        }
+
+        @Test
+        @DisplayName("Deve atualizar status PAGAMENTO_RECUSADO -> PAGAMENTO_PENDENTE")
+        void shouldUpdateStatusRecusadoToPendente() {
+            var items = new ArrayList<OrderItemDefinition>();
+            items.add(new OrderItemDefinition(10L, "Dummy", 1, BigDecimal.TEN, new ArrayList<>()));
+            var order = new OrderDefinition(6L, null, OrderStatus.PAGAMENTO_RECUSADO, items);
+            var request = new OrderStatusUpdateRequest(OrderStatus.PAGAMENTO_PENDENTE);
+
+            when(orderRepository.findById(6L)).thenReturn(Optional.of(order));
+            when(orderRepository.save(order)).thenReturn(order);
+
+            useCase.updateOrderStatus(6L, request);
+
+            assertThat(order.getStatus()).isEqualTo(OrderStatus.PAGAMENTO_PENDENTE);
+            verify(orderRepository).save(order);
         }
 
         @Test
@@ -348,7 +397,7 @@ class OrderUseCaseImplTest {
 
         @Test
         @DisplayName("Deve falhar com transição inválida INICIADO -> CONCLUIDO")
-        void shouldFailInvalidTransitionIníciadoToConcluido() {
+        void shouldFailInvalidTransitionIniciadoToConcluido() {
             var items = new ArrayList<OrderItemDefinition>();
             items.add(new OrderItemDefinition(10L, "Dummy", 1, BigDecimal.TEN, new ArrayList<>()));
             var order = new OrderDefinition(1L, null, OrderStatus.INICIADO, items);
@@ -363,7 +412,7 @@ class OrderUseCaseImplTest {
 
         @Test
         @DisplayName("Deve falhar com transição inválida INICIADO -> PAGAMENTO_APROVADO")
-        void shouldFailInvalidTransitionIníciadoToAprovado() {
+        void shouldFailInvalidTransitionIniciadoToAprovado() {
             var items = new ArrayList<OrderItemDefinition>();
             items.add(new OrderItemDefinition(10L, "Dummy", 1, BigDecimal.TEN, new ArrayList<>()));
             var order = new OrderDefinition(1L, null, OrderStatus.INICIADO, items);
@@ -425,7 +474,6 @@ class OrderUseCaseImplTest {
     @Nested
     @DisplayName("Cenários de Listagem")
     class ListOrdersTests {
-
         @Test
         @DisplayName("Deve listar pedidos filtrados por status")
         void shouldListOrdersByFilter() {
