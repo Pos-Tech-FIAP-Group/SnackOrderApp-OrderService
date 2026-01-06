@@ -1,4 +1,4 @@
-package com.fiap.snackapp.adapters.driver.api.exceptionhandler;
+package com.fiap.snackapp.adapters.driver.api.exception;
 
 import com.fiap.snackapp.adapters.driver.api.dto.response.ErrorResponse;
 import com.fiap.snackapp.adapters.driver.api.dto.response.ValidationErrorDetail;
@@ -20,7 +20,6 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Log4j2
 @RestControllerAdvice
@@ -37,6 +36,7 @@ public class GlobalApiExceptionHandler extends ResponseEntityExceptionHandler {
     }
 
     @Override
+    @SuppressWarnings("java:S2638")
     protected ResponseEntity<Object> handleMethodArgumentNotValid(
             MethodArgumentNotValidException ex,
             @NonNull HttpHeaders headers,

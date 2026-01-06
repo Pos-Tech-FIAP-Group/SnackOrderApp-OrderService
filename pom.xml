@@ -9,9 +9,9 @@
 		<relativePath/>
 	</parent>
 	<groupId>com.fiap.snackapp</groupId>
-	<artifactId>snackapp-pedido</artifactId>
+	<artifactId>snackapp-order-service</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>Snack Order App - Pedido</name>
+	<name>Snack Order App - Order Service</name>
 	<description>Snack Order App - Microserviço de Pedido</description>
 	<url/>
 	<licenses>
@@ -30,7 +30,7 @@
 		<java.version>21</java.version>
 		<sonar.organization>pos-tech-fiap-group</sonar.organization>
 		<sonar.host.url>https://sonarcloud.io</sonar.host.url>
-		<sonar.projectKey>pos-tech-fiap-group_snackorderapp-pedido</sonar.projectKey>
+		<sonar.projectKey>pos-tech-fiap-group_snack-order-app-order-service</sonar.projectKey>
 		<sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
 		<sonar.exclusions>
 			**/configuration/**,
@@ -38,6 +38,7 @@
 			**/entity/**,
 			**/exception/**,
 			**/mapper/**,
+			**/specification/**,
 			**/SnackOrderAppApplication.java
 		</sonar.exclusions>
 	</properties>
@@ -61,12 +62,6 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-devtools</artifactId>
-			<scope>runtime</scope>
-			<optional>true</optional>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-docker-compose</artifactId>
 			<scope>runtime</scope>
 			<optional>true</optional>
 		</dependency>
@@ -135,6 +130,17 @@
 				<groupId>org.jacoco</groupId>
 				<artifactId>jacoco-maven-plugin</artifactId>
 				<version>0.8.13</version>
+				<configuration>
+					<excludes>
+						<exclude>**/dto/**</exclude>
+						<exclude>**/entity/**</exclude>
+						<exclude>**/exception/**</exclude>
+						<exclude>**/configuration/**</exclude>
+						<exclude>**/mapper/**</exclude>
+						<exclude>**/specification/**</exclude>
+						<exclude>**/SnackOrderAppApplication.class</exclude>
+					</excludes>
+				</configuration>
 				<executions>
 					<execution>
 						<goals>

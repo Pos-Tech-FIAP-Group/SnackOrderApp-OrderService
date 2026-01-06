@@ -1,6 +1,8 @@
 package com.fiap.snackapp.core.application.mapper;
 
+import com.fiap.snackapp.core.application.dto.request.AddOnToKitchenRequest;
 import com.fiap.snackapp.core.application.dto.request.ItemRequest;
+import com.fiap.snackapp.core.application.dto.request.ItemToKitchenRequest;
 import com.fiap.snackapp.core.application.dto.response.AddonItemResponse;
 import com.fiap.snackapp.core.application.dto.response.OrderItemResponse;
 import com.fiap.snackapp.core.domain.model.AppliedAddOn;
@@ -43,6 +45,21 @@ public class OrderItemMapper {
                 item.quantity(),
                 addOns,
                 item.getTotalPrice()
+        );
+    }
+
+    public ItemToKitchenRequest toKitchenRequest(OrderItemDefinition item) {
+        List<AddOnToKitchenRequest> addOns = item.appliedAddOns().stream()
+                .map(addOn -> new AddOnToKitchenRequest(
+                        addOn.getAddOnDefinition().name(),
+                        addOn.getQuantity()
+                ))
+                .toList();
+
+        return new ItemToKitchenRequest(
+                item.productName(),
+                item.quantity(),
+                addOns
         );
     }
 }

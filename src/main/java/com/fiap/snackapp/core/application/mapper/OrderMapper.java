@@ -1,6 +1,8 @@
 package com.fiap.snackapp.core.application.mapper;
 
+import com.fiap.snackapp.core.application.dto.request.ItemToKitchenRequest;
 import com.fiap.snackapp.core.application.dto.request.OrderInitRequest;
+import com.fiap.snackapp.core.application.dto.request.OrderToKitchenRequest;
 import com.fiap.snackapp.core.application.dto.response.OrderItemResponse;
 import com.fiap.snackapp.core.application.dto.response.OrderResponse;
 import com.fiap.snackapp.core.domain.enums.OrderStatus;
@@ -46,6 +48,14 @@ public class OrderMapper {
                 items,
                 order.getTotalPrice()
         );
+    }
+
+    public OrderToKitchenRequest toKitchenRequest(OrderDefinition order) {
+        List<ItemToKitchenRequest> items = order.getItems().stream()
+                .map(orderItemMapper::toKitchenRequest)
+                .toList();
+
+        return new OrderToKitchenRequest(order.getId(), items);
     }
 
 }
