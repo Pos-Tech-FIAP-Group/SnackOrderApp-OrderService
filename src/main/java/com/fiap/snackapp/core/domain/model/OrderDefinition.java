@@ -21,7 +21,7 @@ public class OrderDefinition {
         this.id = id;
         this.customer = customer;
         this.status = status;
-        this.items = (items != null) ? items : new ArrayList<>();
+        this.items = new ArrayList<>(items != null ? items : List.of());
     }
 
     public void addItem(OrderItemDefinition item) {
