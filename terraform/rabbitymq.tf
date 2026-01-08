@@ -46,7 +46,7 @@ resource "aws_mq_broker" "snack_app_broker" {
   publicly_accessible = true
 
   # security_groups = [aws_security_group.rabbitmq_sg.id]
-  subnet_ids      = var.subnet_ids
+  subnet_ids      = [var.subnet_id1]
 
   # storage type padrão é EBS; pode configurar storage_type se quiser
   # storage_type = "ebs"
