@@ -18,7 +18,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -55,21 +57,22 @@ public class OrderUseCaseImpl implements OrderUseCase {
             ProductDefinition product = productRepository.findById(itemReq.productId())
                     .orElseThrow(() -> new ResourceNotFoundException("Produto não encontrado: " + itemReq.productId()));
 
-            List<AppliedAddOn> appliedAddOns = itemReq.addOns() != null
-                    ? itemReq.addOns().stream()
-                    .map(addOnReq -> {
-                        AddOnDefinition addOn = addOnRepository.findById(addOnReq.addOnId())
-                                .orElseThrow(() -> new ResourceNotFoundException("Adicional não encontrado: " + addOnReq.addOnId()));
-                        return new AppliedAddOn(
-                                new AddOnDefinition(addOn.id(), addOn.name(), addOn.category(), addOn.price()),
-                                addOnReq.quantity()
-                        );
-                    })
-                    .toList()
-                    : List.of();
+            List<AppliedAddOn> appliedAddOns =
+                    (itemReq.addOns() == null)
+                            ? new ArrayList<>()
+                            : itemReq.addOns().stream()
+                            .map(addOnReq -> {
+                                AddOnDefinition addOn = addOnRepository.findById(addOnReq.addOnId())
+                                        .orElseThrow(() -> new ResourceNotFoundException("Adicional não encontrado: " + addOnReq.addOnId()));
+                                return new AppliedAddOn(
+                                        new AddOnDefinition(addOn.id(), addOn.name(), addOn.category(), addOn.price()),
+                                        addOnReq.quantity()
+                                );
+                            })
+                            .collect(Collectors.toCollection(ArrayList::new));
 
             OrderItemDefinition item = orderItemMapper.toDomain(product, itemReq, appliedAddOns);
-
+            System.out.println("items class = " + item.getClass());
             order.addItem(item);
         }
 

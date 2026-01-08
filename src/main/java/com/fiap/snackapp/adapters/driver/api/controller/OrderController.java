@@ -48,7 +48,7 @@ public class OrderController {
                 .body(response);
     }
 
-    @PostMapping
+    @PostMapping("/payment")
     public ResponseEntity<Void> requestOrderPaymentCreation(OrderPaymentCreateRequest orderPaymentCreateRequest) {
         orderUseCase.requestOrderPaymentCreation(orderPaymentCreateRequest);
         return ResponseEntity

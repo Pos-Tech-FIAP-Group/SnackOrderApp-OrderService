@@ -40,7 +40,7 @@ public class SnackAppPedidoAMQPConfiguration {
         return BindingBuilder
                 .bind(paymentCreatedQueue())
                 .to(paymentExchange())
-                .with("payment.created");
+                .with("payment.create");
     }
 
     @Bean
