@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 public class OrderPaymentCreatedListener {
     private final OrderUseCase orderUseCase;
 
-    @RabbitListener(queues = "order.payment.status")
+    @RabbitListener(queues = "payment.created.queue")
     public void handleOrderPaymentCreated(OrderPaymentCreatedMessageResponse orderPaymentCreatedMessageResponse) {
         orderUseCase.updateOrderWithQrCode(orderPaymentCreatedMessageResponse);
     }
