@@ -7,8 +7,6 @@ on:
       - completed
     branches:
       - main
-  push:
-    branches: [ "main" ]
 
 env:
   AWS_REGION: sa-east-1
