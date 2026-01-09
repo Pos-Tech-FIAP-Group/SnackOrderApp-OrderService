@@ -104,7 +104,9 @@ public class OrderPersistenceMapper {
                 entity.getId(),
                 customer,
                 entity.getStatus(),
-                items
+                items,
+                entity.getQrCodeUrl(),
+                entity.getPaymentId()
         );
     }
 }

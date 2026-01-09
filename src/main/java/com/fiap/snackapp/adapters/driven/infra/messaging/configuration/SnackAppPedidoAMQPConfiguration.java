@@ -31,6 +31,19 @@ public class SnackAppPedidoAMQPConfiguration {
     }
 
     @Bean
+    public Queue paymentCreateQueue() {
+        return new Queue("payment.create.queue", true);
+    }
+
+    @Bean
+    public Binding paymentCreateBinding() {
+        return BindingBuilder
+                .bind(paymentCreateQueue())
+                .to(paymentExchange())
+                .with("payment.create");
+    }
+
+    @Bean
     public Queue paymentCreatedQueue() {
         return new Queue("payment.created.queue", true);
     }
@@ -40,7 +53,7 @@ public class SnackAppPedidoAMQPConfiguration {
         return BindingBuilder
                 .bind(paymentCreatedQueue())
                 .to(paymentExchange())
-                .with("payment.create");
+                .with("payment.created");
     }
 
     @Bean
