@@ -56,6 +56,8 @@ class OrderUseCaseImplTest {
     @InjectMocks
     private OrderUseCaseImpl useCase;
 
+    private static final String ORDER_NOT_FOUND = "Pedido não encontrado";
+
     @Nested
     @DisplayName("Cenários de Início de Pedido")
     class StartOrderTests {
@@ -164,7 +166,7 @@ class OrderUseCaseImplTest {
 
             assertThatThrownBy(() -> useCase.addItems(99L, req))
                     .isInstanceOf(ResourceNotFoundException.class)
-                    .hasMessageContaining("Pedido não encontrado");
+                    .hasMessageContaining(ORDER_NOT_FOUND);
         }
 
         @Test
@@ -409,7 +411,7 @@ class OrderUseCaseImplTest {
 
             assertThatThrownBy(() -> useCase.updateOrderStatus(999L, request))
                     .isInstanceOf(ResourceNotFoundException.class)
-                    .hasMessageContaining("Pedido não encontrado");
+                    .hasMessageContaining(ORDER_NOT_FOUND);
         }
 
         @Test

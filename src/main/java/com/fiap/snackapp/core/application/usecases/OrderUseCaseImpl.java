@@ -34,6 +34,8 @@ public class OrderUseCaseImpl implements OrderUseCase {
     private final AddOnRepositoryPort addOnRepository;
     private final RabbitTemplate rabbitTemplate;
 
+    private static final String ORDER_NOT_FOUND = "Pedido não encontrado: ";
+
     @Override
     public OrderResponse initOrder(String cpf) {
         CustomerDefinition customer = null;
@@ -51,7 +53,7 @@ public class OrderUseCaseImpl implements OrderUseCase {
     @Override
     public OrderResponse addItems(Long orderId, OrderItemsRequest request) {
         OrderDefinition order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new ResourceNotFoundException("Pedido não encontrado: " + orderId));
+                .orElseThrow(() -> new ResourceNotFoundException(ORDER_NOT_FOUND + orderId));
 
         for (ItemRequest itemReq : request.items()) {
             ProductDefinition product = productRepository.findById(itemReq.productId())
@@ -94,7 +96,7 @@ public class OrderUseCaseImpl implements OrderUseCase {
     @Override
     public void updateOrderWithQrCode(OrderPaymentCreatedMessageResponse response) {
         OrderDefinition order = orderRepository.findById(response.orderId())
-                .orElseThrow(() -> new ResourceNotFoundException("Pedido não encontrado: " + response.orderId()));
+                .orElseThrow(() -> new ResourceNotFoundException(ORDER_NOT_FOUND + response.orderId()));
         order.setQrCodeUrl(response.qrCodeUrl());
         order.setPaymentId(response.paymentId());
         orderRepository.save(order);
@@ -109,7 +111,7 @@ public class OrderUseCaseImpl implements OrderUseCase {
     @Override
     public OrderDefinition updateOrderStatus(Long orderId, OrderStatusUpdateRequest request) {
         OrderDefinition order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new ResourceNotFoundException("Pedido não encontrado: " + orderId));
+                .orElseThrow(() -> new ResourceNotFoundException(ORDER_NOT_FOUND + orderId));
 
         if (order.getItems().isEmpty()) {
             throw new IllegalStateException("Não é possível mudar status de um pedido sem itens.");
