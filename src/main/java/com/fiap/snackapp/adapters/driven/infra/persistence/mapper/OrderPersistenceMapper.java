@@ -28,6 +28,8 @@ public class OrderPersistenceMapper {
         entity.setId(domain.getId());
         entity.setStatus(domain.getStatus());
         entity.setCustomer(customerEntity);
+        entity.setPaymentId(domain.getPaymentId());
+        entity.setQrCodeUrl(domain.getQrCodeUrl());
 
         Set<OrderItemEntity> itemEntities = domain.getItems().stream()
                 .map(item -> {

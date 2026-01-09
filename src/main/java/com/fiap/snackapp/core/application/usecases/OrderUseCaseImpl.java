@@ -93,8 +93,8 @@ public class OrderUseCaseImpl implements OrderUseCase {
 
     @Override
     public void updateOrderWithQrCode(OrderPaymentCreatedMessageResponse response) {
-        var order = updateOrderStatus(response.orderId(),
-                new OrderStatusUpdateRequest(OrderStatus.PAGAMENTO_QR_CODE_UPDATED));
+        OrderDefinition order = orderRepository.findById(response.orderId())
+                .orElseThrow(() -> new ResourceNotFoundException("Pedido não encontrado: " + response.orderId()));
         order.setQrCodeUrl(response.qrCodeUrl());
         order.setPaymentId(response.paymentId());
         orderRepository.save(order);
@@ -144,13 +144,10 @@ public class OrderUseCaseImpl implements OrderUseCase {
     private boolean isNextValid(OrderStatus current, OrderStatus next) {
         return switch (current) {
             case INICIADO -> next == OrderStatus.PAGAMENTO_PENDENTE;
-            case PAGAMENTO_PENDENTE -> next == OrderStatus.PAGAMENTO_QR_CODE_UPDATED || next == OrderStatus.PAGAMENTO_APROVADO || next == OrderStatus.PAGAMENTO_RECUSADO;
-            case PAGAMENTO_QR_CODE_UPDATED -> next == OrderStatus.CANCELADO || next == OrderStatus.PAGAMENTO_RECUSADO || next == OrderStatus.PAGAMENTO_APROVADO;
+            case PAGAMENTO_PENDENTE -> next == OrderStatus.PAGAMENTO_APROVADO || next == OrderStatus.PAGAMENTO_RECUSADO;
             case PAGAMENTO_RECUSADO -> next == OrderStatus.CANCELADO || next == OrderStatus.PAGAMENTO_PENDENTE;
             case PAGAMENTO_APROVADO -> next == OrderStatus.CONCLUIDO;
             default -> false;
         };
     }
-
-
 }
