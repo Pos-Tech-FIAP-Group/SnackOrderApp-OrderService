@@ -8,5 +8,7 @@ public record OrderResponse(
         String status,
         String cpf,
         List<OrderItemResponse> items,
-        BigDecimal totalPrice
+        BigDecimal totalPrice,
+        String qrCodeUrl,
+        String paymentId
 ) { }

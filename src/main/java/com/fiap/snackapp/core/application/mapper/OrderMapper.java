@@ -46,7 +46,9 @@ public class OrderMapper {
                 order.getStatus().name(),
                 cpf,
                 items,
-                order.getTotalPrice()
+                order.getTotalPrice(),
+                order.getQrCodeUrl(),
+                order.getPaymentId()
         );
     }
 

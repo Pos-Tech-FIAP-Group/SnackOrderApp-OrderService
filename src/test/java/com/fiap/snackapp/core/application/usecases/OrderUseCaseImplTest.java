@@ -56,6 +56,8 @@ class OrderUseCaseImplTest {
     @InjectMocks
     private OrderUseCaseImpl useCase;
 
+    private static final String ORDER_NOT_FOUND = "Pedido não encontrado";
+
     @Nested
     @DisplayName("Cenários de Início de Pedido")
     class StartOrderTests {
@@ -67,7 +69,7 @@ class OrderUseCaseImplTest {
 
             var orderToSave = new OrderDefinition(null, savedCustomer, OrderStatus.INICIADO, new ArrayList<>(), null, null);
             var savedOrder = new OrderDefinition(10L, savedCustomer, OrderStatus.INICIADO, new ArrayList<>(), null, null);
-            var expectedResponse = new OrderResponse(10L, OrderStatus.INICIADO.name(), cpfString, List.of(), BigDecimal.ZERO);
+            var expectedResponse = new OrderResponse(10L, OrderStatus.INICIADO.name(), cpfString, List.of(), BigDecimal.ZERO, null, null);
 
             when(customerRepository.findByCpf(any(CPF.class))).thenReturn(Optional.empty());
             when(customerRepository.save(any(CustomerDefinition.class))).thenReturn(savedCustomer);
@@ -88,7 +90,7 @@ class OrderUseCaseImplTest {
             var cpfString = "12345678900";
             var existingCustomer = new CustomerDefinition(1L, "João", new Email("joao@email.com"), new CPF(cpfString));
             var savedOrder = new OrderDefinition(10L, existingCustomer, OrderStatus.INICIADO, new ArrayList<>(), null, null);
-            var expectedResponse = new OrderResponse(10L, OrderStatus.INICIADO.name(), cpfString, List.of(), BigDecimal.ZERO);
+            var expectedResponse = new OrderResponse(10L, OrderStatus.INICIADO.name(), cpfString, List.of(), BigDecimal.ZERO, null, null);
 
             when(customerRepository.findByCpf(any(CPF.class))).thenReturn(Optional.of(existingCustomer));
             when(orderMapper.toOrderDomain(existingCustomer)).thenReturn(new OrderDefinition(null, existingCustomer, OrderStatus.INICIADO, new ArrayList<>(), null, null));
@@ -164,7 +166,7 @@ class OrderUseCaseImplTest {
 
             assertThatThrownBy(() -> useCase.addItems(99L, req))
                     .isInstanceOf(ResourceNotFoundException.class)
-                    .hasMessageContaining("Pedido não encontrado");
+                    .hasMessageContaining(ORDER_NOT_FOUND);
         }
 
         @Test
@@ -206,55 +208,76 @@ class OrderUseCaseImplTest {
     @DisplayName("Cenários de RabbitMQ e Integração")
     class RabbitMQTests {
 
-//        @Test
-//        @DisplayName("Deve enviar requisição de pagamento para fila correta")
-//        void shouldSendPaymentRequestToQueue() {
-//            var request = new OrderPaymentCreateRequest(1L, BigDecimal.TEN, 99L);
-//
-//            useCase.requestOrderPaymentCreation(request);
-//
-//            verify(rabbitTemplate).convertAndSend(
-//                    "payment.exchange",
-//                    "payment.create",
-//                    request
-//            );
-//        }
+        @Test
+        @DisplayName("Deve atualizar status e enviar requisição de pagamento para fila correta")
+        void shouldSendPaymentRequestToQueue() {
+            // Arrange
+            Long orderId = 1L;
+            var request = new OrderPaymentCreateRequest(orderId, BigDecimal.TEN, 99L);
+
+            var items = new ArrayList<OrderItemDefinition>();
+            items.add(new OrderItemDefinition(10L, "Item", 1, BigDecimal.TEN, new ArrayList<>()));
+            var order = new OrderDefinition(orderId, null, OrderStatus.INICIADO, items, null, null);
+
+            when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
+            when(orderRepository.save(any(OrderDefinition.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+            // Act
+            useCase.requestOrderPaymentCreation(request);
+
+            // Assert
+            assertThat(order.getStatus()).isEqualTo(OrderStatus.PAGAMENTO_PENDENTE);
+            verify(orderRepository).save(order);
+
+            // Verifica o envio para a fila
+            verify(rabbitTemplate).convertAndSend(
+                    "payment.exchange",
+                    "payment.create",
+                    request
+            );
+        }
 
         @Test
         @DisplayName("Deve enviar pedido para cozinha")
         void shouldSendOrderToKitchen() {
-            // Arrange
             var order = new OrderDefinition(10L, null, OrderStatus.PAGAMENTO_APROVADO, List.of(), null, null);
             var kitchenRequest = new OrderToKitchenRequest(10L, List.of());
 
             when(orderMapper.toKitchenRequest(order)).thenReturn(kitchenRequest);
 
-            // Act
             useCase.sendOrderToKitchen(order);
 
-            // Assert
             verify(rabbitTemplate).convertAndSend("kitchen.order.received", kitchenRequest);
         }
 
-//        @Test
-//        @DisplayName("Deve processar callback de QR Code (atualiza status)")
-//        void shouldProcessQrCodeCallback() {
-//            var items = new ArrayList<OrderItemDefinition>();
-//            items.add(new OrderItemDefinition(10L, "Item", 1, BigDecimal.TEN, new ArrayList<>()));
-//            var order = new OrderDefinition(55L, null, OrderStatus.INICIADO, items, null, null);
-//
-//            when(orderRepository.findById(55L)).thenReturn(Optional.of(order));
-//            when(orderRepository.save(order)).thenReturn(order);
-//
-//            var responseMsg = new OrderPaymentCreatedMessageResponse(
-//                    "pay-uuid", 55L, BigDecimal.TEN, "http://qr.code", OrderStatus.PAGAMENTO_PENDENTE
-//            );
-//
-//            useCase.updateOrderWithQrCode(responseMsg);
-//
-//            assertThat(order.getStatus()).isEqualTo(OrderStatus.PAGAMENTO_PENDENTE);
-//            verify(orderRepository).save(order);
-//        }
+        @Test
+        @DisplayName("Deve processar callback de QR Code (atualiza status e dados)")
+        void shouldProcessQrCodeCallback() {
+            // Arrange
+            var items = new ArrayList<OrderItemDefinition>();
+            items.add(new OrderItemDefinition(10L, "Item", 1, BigDecimal.TEN, new ArrayList<>()));
+
+            var order = new OrderDefinition(55L, null, OrderStatus.PAGAMENTO_PENDENTE, items, null, null);
+
+            when(orderRepository.findById(55L)).thenReturn(Optional.of(order));
+            when(orderRepository.save(any(OrderDefinition.class))).thenAnswer(i -> i.getArgument(0));
+
+            var responseMsg = new OrderPaymentCreatedMessageResponse(
+                    "pay-uuid", 55L, BigDecimal.TEN, "http://qr.code", OrderStatus.PAGAMENTO_PENDENTE
+            );
+
+            // Act
+            useCase.updateOrderWithQrCode(responseMsg);
+
+            // Assert
+            assertThat(order.getStatus()).isEqualTo(OrderStatus.PAGAMENTO_PENDENTE);
+
+            assertThat(order.getQrCodeUrl()).isEqualTo("http://qr.code");
+            assertThat(order.getPaymentId()).isEqualTo("pay-uuid");
+
+            verify(orderRepository, atLeastOnce()).save(order);
+        }
+
     }
 
     @Nested
@@ -278,10 +301,11 @@ class OrderUseCaseImplTest {
             verify(orderRepository).save(order);
         }
 
+        // ... (restante dos testes de UpdateStatusTests permanecem inalterados) ...
+
         @Test
         @DisplayName("Deve atualizar status PAGAMENTO_PENDENTE -> PAGAMENTO_APROVADO")
         void shouldUpdateStatusPendenteToAprovado() {
-            // Arrange
             var items = new ArrayList<OrderItemDefinition>();
             items.add(new OrderItemDefinition(10L, "Dummy", 1, BigDecimal.TEN, new ArrayList<>()));
             var order = new OrderDefinition(2L, null, OrderStatus.PAGAMENTO_PENDENTE, items,  null, null);
@@ -290,18 +314,13 @@ class OrderUseCaseImplTest {
             when(orderRepository.findById(2L)).thenReturn(Optional.of(order));
             when(orderRepository.save(order)).thenReturn(order);
 
-            // Act
             useCase.updateOrderStatus(2L, request);
 
-            // Assert
             assertThat(order.getStatus()).isEqualTo(OrderStatus.PAGAMENTO_APROVADO);
             verify(orderRepository).save(order);
-
-            // Garante que NÃO chama a fila de cozinha nem o mapper
             verifyNoInteractions(rabbitTemplate);
             verify(orderMapper, never()).toKitchenRequest(any());
         }
-
 
         @Test
         @DisplayName("Deve atualizar status PAGAMENTO_PENDENTE -> PAGAMENTO_RECUSADO")
@@ -392,7 +411,7 @@ class OrderUseCaseImplTest {
 
             assertThatThrownBy(() -> useCase.updateOrderStatus(999L, request))
                     .isInstanceOf(ResourceNotFoundException.class)
-                    .hasMessageContaining("Pedido não encontrado");
+                    .hasMessageContaining(ORDER_NOT_FOUND);
         }
 
         @Test
