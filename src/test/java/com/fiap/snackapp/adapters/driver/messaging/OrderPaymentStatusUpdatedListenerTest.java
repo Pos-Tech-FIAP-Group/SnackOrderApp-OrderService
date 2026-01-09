@@ -39,7 +39,7 @@ class OrderPaymentStatusUpdatedListenerTest {
         // Mensagem de entrada
         var message = new OrderPaymentStatusUpdatedMessage(orderId, paymentId, OrderStatus.PAGAMENTO_APROVADO);
 
-        OrderDefinition approvedOrder = new OrderDefinition(orderId, null, OrderStatus.PAGAMENTO_APROVADO, null);
+        OrderDefinition approvedOrder = new OrderDefinition(orderId, null, OrderStatus.PAGAMENTO_APROVADO, null,  null, null);
 
         when(orderUseCase.updateOrderStatus(eq(orderId), any(OrderStatusUpdateRequest.class)))
                 .thenReturn(approvedOrder);
@@ -65,7 +65,7 @@ class OrderPaymentStatusUpdatedListenerTest {
         // Mensagem de entrada
         var message = new OrderPaymentStatusUpdatedMessage(orderId, paymentId, OrderStatus.PAGAMENTO_RECUSADO);
 
-        OrderDefinition refusedOrder = new OrderDefinition(orderId, null, OrderStatus.PAGAMENTO_RECUSADO, null);
+        OrderDefinition refusedOrder = new OrderDefinition(orderId, null, OrderStatus.PAGAMENTO_RECUSADO, null,  null, null);
 
         when(orderUseCase.updateOrderStatus(eq(orderId), any(OrderStatusUpdateRequest.class)))
                 .thenReturn(refusedOrder);

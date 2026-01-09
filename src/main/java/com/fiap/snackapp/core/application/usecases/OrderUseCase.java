@@ -19,6 +19,8 @@ public interface OrderUseCase {
 
     List<OrderResponse> listAllOrdersByFilters(List<OrderStatus> orderStatus);
 
+    OrderResponse listOrderById(Long orderId);
+
     void requestOrderPaymentCreation(OrderPaymentCreateRequest orderPaymentCreateRequest);
 
     void updateOrderWithQrCode(OrderPaymentCreatedMessageResponse orderPaymentCreatedMessageResponse);

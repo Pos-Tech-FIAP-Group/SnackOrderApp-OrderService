@@ -31,7 +31,7 @@ public class OrderMapper {
     }
 
     public OrderDefinition toOrderDomain(CustomerDefinition customer) {
-        return new OrderDefinition(null, customer, OrderStatus.INICIADO, new ArrayList<>());
+        return new OrderDefinition(null, customer, OrderStatus.INICIADO, new ArrayList<>(), null, null);
     }
 
     public OrderResponse toResponse(OrderDefinition order) {

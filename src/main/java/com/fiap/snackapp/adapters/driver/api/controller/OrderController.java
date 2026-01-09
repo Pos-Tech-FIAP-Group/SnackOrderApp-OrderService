@@ -49,7 +49,7 @@ public class OrderController {
     }
 
     @PostMapping("/payment")
-    public ResponseEntity<Void> requestOrderPaymentCreation(OrderPaymentCreateRequest orderPaymentCreateRequest) {
+    public ResponseEntity<Void> requestOrderPaymentCreation(@RequestBody OrderPaymentCreateRequest orderPaymentCreateRequest) {
         orderUseCase.requestOrderPaymentCreation(orderPaymentCreateRequest);
         return ResponseEntity
                 .status(HttpStatus.ACCEPTED)
@@ -70,5 +70,11 @@ public class OrderController {
     public ResponseEntity<List<OrderResponse>> listAllOrdersByFilters(
             @RequestParam(name = "status", required = false) List<OrderStatus> orderStatus) {
         return ResponseEntity.ok(orderUseCase.listAllOrdersByFilters(orderStatus));
+    }
+
+    @GetMapping("/{orderId}")
+    public ResponseEntity<OrderResponse> listOrderById(
+            @PathVariable Long orderId) {
+        return ResponseEntity.ok(orderUseCase.listOrderById(orderId));
     }
 }

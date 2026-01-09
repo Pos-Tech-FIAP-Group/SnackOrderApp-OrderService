@@ -76,7 +76,7 @@ class OrderPersistenceAdapterIntegrationTest {
         @Test
         @DisplayName("deve persistir pedido novo e retornar com id")
         void shouldPersistNewOrder() {
-            var domain = new OrderDefinition(null, null, OrderStatus.INICIADO, new ArrayList<>());
+            var domain = new OrderDefinition(null, null, OrderStatus.INICIADO, new ArrayList<>(),  null, null);
 
             var saved = orderRepositoryPort.save(domain);
 

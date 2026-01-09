@@ -27,6 +27,10 @@ public class OrderEntity {
     @Enumerated(EnumType.STRING)
     private OrderStatus status;
 
+    private String qrCodeUrl ;
+
+    private String paymentId ;
+
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<OrderItemEntity> items = new HashSet<>();
 }

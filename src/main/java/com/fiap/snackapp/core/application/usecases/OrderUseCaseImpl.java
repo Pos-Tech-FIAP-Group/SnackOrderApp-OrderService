@@ -72,7 +72,6 @@ public class OrderUseCaseImpl implements OrderUseCase {
                             .collect(Collectors.toCollection(ArrayList::new));
 
             OrderItemDefinition item = orderItemMapper.toDomain(product, itemReq, appliedAddOns);
-            System.out.println("items class = " + item.getClass());
             order.addItem(item);
         }
 
@@ -82,6 +81,9 @@ public class OrderUseCaseImpl implements OrderUseCase {
 
     @Override
     public void requestOrderPaymentCreation(OrderPaymentCreateRequest orderPaymentCreateRequest) {
+        updateOrderStatus(orderPaymentCreateRequest.orderId(),
+                new OrderStatusUpdateRequest(OrderStatus.PAGAMENTO_PENDENTE));
+
         rabbitTemplate.convertAndSend(
                 "payment.exchange",
                 "payment.create",
@@ -90,16 +92,18 @@ public class OrderUseCaseImpl implements OrderUseCase {
     }
 
     @Override
-    public void sendOrderToKitchen(OrderDefinition order) {
-        OrderToKitchenRequest orderToKitchen = orderMapper.toKitchenRequest(order);
-        rabbitTemplate.convertAndSend("kitchen.order.received", orderToKitchen);
+    public void updateOrderWithQrCode(OrderPaymentCreatedMessageResponse response) {
+        var order = updateOrderStatus(response.orderId(),
+                new OrderStatusUpdateRequest(OrderStatus.PAGAMENTO_QR_CODE_UPDATED));
+        order.setQrCodeUrl(response.qrCodeUrl());
+        order.setPaymentId(response.paymentId());
+        orderRepository.save(order);
     }
 
     @Override
-    public void updateOrderWithQrCode(OrderPaymentCreatedMessageResponse orderPaymentCreatedMessageResponse) {
-        updateOrderStatus(orderPaymentCreatedMessageResponse.orderId(),
-                new OrderStatusUpdateRequest(OrderStatus.PAGAMENTO_PENDENTE));
-
+    public void sendOrderToKitchen(OrderDefinition order) {
+        OrderToKitchenRequest orderToKitchen = orderMapper.toKitchenRequest(order);
+        rabbitTemplate.convertAndSend("kitchen.order.received", orderToKitchen);
     }
 
     @Override
@@ -130,10 +134,18 @@ public class OrderUseCaseImpl implements OrderUseCase {
                 .toList();
     }
 
+    @Override
+    public OrderResponse listOrderById(Long orderId) {
+        var result = orderRepository.findById(orderId);
+
+        return result.map(orderMapper::toResponse).orElse(null);
+    }
+
     private boolean isNextValid(OrderStatus current, OrderStatus next) {
         return switch (current) {
             case INICIADO -> next == OrderStatus.PAGAMENTO_PENDENTE;
-            case PAGAMENTO_PENDENTE -> next == OrderStatus.PAGAMENTO_APROVADO || next == OrderStatus.PAGAMENTO_RECUSADO;
+            case PAGAMENTO_PENDENTE -> next == OrderStatus.PAGAMENTO_QR_CODE_UPDATED || next == OrderStatus.PAGAMENTO_APROVADO || next == OrderStatus.PAGAMENTO_RECUSADO;
+            case PAGAMENTO_QR_CODE_UPDATED -> next == OrderStatus.CANCELADO || next == OrderStatus.PAGAMENTO_RECUSADO || next == OrderStatus.PAGAMENTO_APROVADO;
             case PAGAMENTO_RECUSADO -> next == OrderStatus.CANCELADO || next == OrderStatus.PAGAMENTO_PENDENTE;
             case PAGAMENTO_APROVADO -> next == OrderStatus.CONCLUIDO;
             default -> false;
