@@ -38,7 +38,7 @@ class OrderDefinitionTest {
         items.add(item2);
 
         // Usando o Enum correto: INICIADO
-        var order = new OrderDefinition(1L, customer, OrderStatus.INICIADO, items);
+        var order = new OrderDefinition(1L, customer, OrderStatus.INICIADO, items,  null, null);
 
         // Validação: 10 + 5.50 = 15.50
         assertThat(order.getTotalPrice()).isEqualByComparingTo(new BigDecimal("15.50"));
@@ -47,7 +47,7 @@ class OrderDefinitionTest {
     @Test
     @DisplayName("Deve retornar zero se o pedido não tiver itens")
     void shouldReturnZeroTotalPriceWhenNoItems() {
-        var order = new OrderDefinition(1L, customer, OrderStatus.INICIADO, null);
+        var order = new OrderDefinition(1L, customer, OrderStatus.INICIADO, null,  null, null);
 
         assertThat(order.getTotalPrice()).isEqualByComparingTo(BigDecimal.ZERO);
     }
@@ -55,7 +55,7 @@ class OrderDefinitionTest {
     @Test
     @DisplayName("Deve inicializar lista vazia se passar null no construtor")
     void shouldInitializeEmptyListWhenNullPassed() {
-        var order = new OrderDefinition(1L, customer, OrderStatus.INICIADO, null);
+        var order = new OrderDefinition(1L, customer, OrderStatus.INICIADO, null,  null, null);
 
         assertThat(order.getItems()).isNotNull().isEmpty();
     }
@@ -63,7 +63,7 @@ class OrderDefinitionTest {
     @Test
     @DisplayName("Deve adicionar itens à lista")
     void shouldAddItemToList() {
-        var order = new OrderDefinition(1L, customer, OrderStatus.INICIADO, new ArrayList<>());
+        var order = new OrderDefinition(1L, customer, OrderStatus.INICIADO, new ArrayList<>(),  null, null);
 
         order.addItem(item1);
 
@@ -76,7 +76,7 @@ class OrderDefinitionTest {
     void shouldCoverLombokGettersAndSetters() {
         // Cria com valores iniciais
         var list = new ArrayList<OrderItemDefinition>();
-        var order = new OrderDefinition(10L, customer, OrderStatus.INICIADO, list);
+        var order = new OrderDefinition(10L, customer, OrderStatus.INICIADO, list,  null, null);
 
         // Teste Getters (Lombok)
         assertThat(order.getId()).isEqualTo(10L);
